@@ -1,0 +1,63 @@
+// x scale (change values based on the real data)
+var x_scale = d3.scaleLinear()
+  .range([0, (container_width - padding*2)]);
+// y scale (change values based on the real data)
+var y_scale = d3.scaleLinear()
+  .range([(container_height - padding*2), 0]);
+// x tick values (change values based on the real data)
+var x_axis = d3.axisBottom(x_scale)
+  .tickFormat(function(d) {return +d});
+// y tick values (change values based on the real data)
+var y_axis = d3.axisLeft(y_scale)
+  .tickFormat(function(d) {return +d});
+// draw x axis
+container_2_plot.append('g')
+  .call(x_axis)
+  .attr("class", "axis")
+  .attr("transform", "translate(" + padding + ", " + (container_height - padding*2) + ")");
+// draw y axis
+container_2_plot.append('g')
+  .call(y_axis)
+  .attr("class", "axis")
+  .attr("transform", "translate(" + padding + ", 0)");
+// x axis label
+container_2_plot.append("text")
+  .attr("class", "axis_label")
+  .attr("x", container_width/2)
+  .attr("y", container_height - padding)
+  .attr("text-anchor", "middle")
+  .text("Time(s)");
+// y axis label
+container_2_plot.append("text")
+  .attr("class", "axis_label")
+  .attr("x", -(container_width/2))
+  .attr("y", 0)
+  .attr("text-anchor", "middle")
+  .attr("transform", "rotate(-90)")
+  .text("Process Rank");
+
+// legend 
+var legend_group = container_2_plot.append("g")
+  .attr("transform", "translate(" + (container_width - padding*3) + ", " + padding + ")");
+
+var legend_options = ["a", "b", "c"];  //Please change this based on the real data
+var legendColor = d3.scaleOrdinal(["blue", "red", "green"]);
+
+legend_options.forEach(function(item, index)
+{
+  var legends = legend_group.append("g")
+    .attr("transform", "translate(0, " + (index * 20) + ")");
+
+  legends.append("text")
+  .text(item)
+  .attr("x", 20)
+  .attr("y", 10)
+  .attr("text-anchor", "start")
+  .style("text-transform", "capitalize")
+  .style("font-size", "15px")
+
+  legends.append("rect")
+  .attr("width", 15)
+  .attr("height", 15)
+  .attr("fill", legendColor(item));
+});

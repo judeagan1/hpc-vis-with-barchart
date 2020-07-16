@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>No-collapse</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div>
+    	   <h1> HPC performance visualization</h1>
+            <p>
+                Display from process <input type="number" min=0 max=1000 step=5 value=0 id="start_pro"> 
+                to process <input type="number" min=0 max=1000 step=5 value=0 id="end_pro">
+                Display Options: <select id = "drop_down"></select>
+        	</p>
+            <div id="svg_chart">
+            </div>
+        </div>       
+        <!-- <script src="https://d3js.org/d3.v5.js"></script> -->
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <script src="d3-tip.js"></script>
+        <script src="code.js"></script>
+    </body>
+</html>
