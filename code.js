@@ -240,7 +240,12 @@ function graph_display()
 function draw_bars(data)
 {
 
+  //tracks how many nodes are at a specific depth
+  //used to set the domain when only working with 1 process
   let counter = 0;
+
+  //array storing all of the nodes for a specific depth in order to extract their time data
+  let timeArray = [];
 
   // console.log(data);
   var y = d3.scaleBand()
@@ -253,34 +258,26 @@ function draw_bars(data)
   x.domain([0, d3.max(data, function(d){ return d.data.time; })])
   y.domain(data.data.task_name);
   
+  //
+  globalRoot.descendants().forEach(node => {
 
-  if(data.depth === 0){
+    if(node.depth === data.depth){
+      console.log(node)
+      counter++
+      timeArray.push(node);
+    }
+  });
 
-    console.log(data)
+  
 
-  }
-  else if(data.depth === 1){
-    
-    data.parent.descendants().forEach(element => {
+  console.log("Nodes at L" + data.depth + ": ", counter);
+  
+  var maxTimeForDepth = d3.max(timeArray, d => d.data.time);
 
-      if(element.depth === data.depth){
-        console.log(element)
-      }
-      
-    })
+  console.log("Longest time for a task: ", maxTimeForDepth)
 
-  }
-  else{
-    globalRoot.descendants().forEach(element => {
-
-      if(element.depth === data.depth){
-        console.log(element)
-      }
-      
-    })
-
-  }
-
+  console.log(d3.least(timeArray, (a, b) => d3.ascending(a.time, b.time)))
+ 
   
     
   
