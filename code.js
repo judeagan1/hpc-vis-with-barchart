@@ -84,9 +84,9 @@ var dorp_down = d3.select("#drop_down")
   .data(options)
   .enter()
   .append("option")
-  .attr("value", function(d) {return d;})
-  .property("selected", function(d){return d === options[0]})
-  .text(function(d)
+  .attr("value", d => {return d;})
+  .property("selected", d => {return d === options[0]})
+  .text(d => 
   {
     return d[0].toUpperCase() + d.slice(1, d.length).split("_").join(" ");
   });
@@ -112,10 +112,10 @@ var globalRoot;
 var treemap = d3.tree().size([container_width - padding, container_height - padding]);
 
 // Read Json file
-d3.json("data/visual_sys.json").then(function(treeData){
+d3.json("data/visual_sys.json").then( treeData => {
   // console.log(treeData); 
   // Assign parent, children, height, depth
-  var root = d3.hierarchy(treeData, function(d) { return d.tasks; });
+  var root = d3.hierarchy(treeData, d => { return d.tasks; });
   root.x0 = container_height / 2;
   root.y0 = 0;
 
@@ -125,7 +125,7 @@ d3.json("data/visual_sys.json").then(function(treeData){
   // draw tree
   draw_tree(treeRoot);
 
-  draw_bars(root);
+  // draw_bars(root);
   // to get time time_data map()filter()
 });
 
@@ -143,7 +143,7 @@ function draw_tree(root)
 {
   //tool tip init for tree
   var tip = d3.tip().attr('class','d3-tip')
-    .html(function(d){
+    .html(d => {
       var text = "<strong>Name:</strong> <span style='color:red'>" + d.data.task_name + "</span><br>";
       text += "<strong>Time:</strong> <span style='color:red'>" + d.data.time + "</span><br>";
       text += "<strong>Children:</strong> <span style='color:red'>" + d.data.children_count + "</span><br>";
@@ -158,7 +158,7 @@ function draw_tree(root)
     .data( root.descendants().slice(1))
     .enter().append("path")
     .attr("class", "link")
-    .attr("d", function(d) {
+    .attr("d", d => {
       //look up d3 path format
       //write function to convert a start point and end point to this format
        return "M" + d.x + "," + d.y
@@ -171,10 +171,10 @@ function draw_tree(root)
   var node = container_1_plot.selectAll(".node")
     .data(root.descendants())
     .enter().append("g")
-    .attr("class", function(d) { 
+    .attr("class", d => { 
       return "node" + (d.children ? " node--internal" : " node--leaf");
     })
-    .attr("transform", function(d) {
+    .attr("transform", d => {
       return "translate(" + d.x + "," + d.y + ")"; })
 
   // shows the task name but is too cluttered. revisit later
@@ -207,7 +207,7 @@ function draw_tree(root)
 
 
 // 2. TO DO: drop down event
-d3.select("#drop_down").on("change", function(d) 
+d3.select("#drop_down").on("change", d => 
 {
   var value = d3.select("#drop_down").property("value");
   console.log(value);
@@ -234,62 +234,109 @@ function graph_display()
 
 // 3. TO DO: draw graph (also need to consider the drop down value)
 
-
-
 // Draw bar chat
 function draw_bars(data)
 {
-
-  //tracks how many nodes are at a specific depth
-  //used to set the domain when only working with 1 process
-  let counter = 0;
-
   //array storing all of the nodes for a specific depth in order to extract their time data
   let timeArray = [];
-
-  // console.log(data);
-  var y = d3.scaleBand()
-          .range([(container_height - padding*2), 0])
-          .padding(0.1);
-
-  var x = d3.scaleLinear()
-          .range([0, (container_width - padding*2)]);
-
-  x.domain([0, d3.max(data, function(d){ return d.data.time; })])
-  y.domain(data.data.task_name);
   
-  //
+  //upon clicking a node, this displays all of its siblings, shows how many siblings there are,
+  //and stores all sibling nodes to access their time data conveniently
   globalRoot.descendants().forEach(node => {
 
     if(node.depth === data.depth){
-      console.log(node)
-      counter++
+      // console.log(node)
       timeArray.push(node);
     }
   });
 
-  
-
-  console.log("Nodes at L" + data.depth + ": ", counter);
-  
+  // longest task runtime at depth level the variable is not technically needed here
   var maxTimeForDepth = d3.max(timeArray, d => d.data.time);
 
-  console.log("Longest time for a task: ", maxTimeForDepth)
+  console.log("Longest time for a task: ", maxTimeForDepth);
 
-  console.log(d3.least(timeArray, (a, b) => d3.ascending(a.time, b.time)))
- 
+  //sort task runtimes in descending order (could make toggleable)
+  // var sortedTimeArray = timeArray.sort((x, y) => {
+  //   return d3.descending(x.data.time, y.data.time);
+  // });
+
+  //tracks how many nodes are at a specific depth
+  //used to set the domain when only working with 1 process
+  var nodeCount = timeArray.length;
+
+  
+  console.log("Nodes at L" + data.depth + ": ", nodeCount);
+
+  var currentDepth = data.depth;
+
+  let update = (data, depth) =>{
+
+  
+    var rects = container_2_plot.selectAll('.rect').data(data);
+  
+  
+    var x = d3.scaleLinear()
+      .range([0, (container_width - padding *2)])
+      .domain([0, d3.max(data, d => d.data.time) + 2]);
+  
+    var y = d3.scaleBand()
+      .range([(container_height - padding*2),0])
+      .padding(0.2)
+      .domain(data.map(function(d,i) { return i }));
+    
+    var x_axis = d3.axisBottom(x)
+      .tickFormat(function(d) {return +d});
+    
+    var y_axis = d3.axisLeft(y)
+      .tickFormat(function(d) {return +d});
+  
+    container_2_plot.append('g')
+      .call(x_axis)
+      .attr("class", "axis")
+      .attr("transform", "translate(" + padding + ", " + (container_height - padding*2) + ")");
+    // draw y axis
+    container_2_plot.append('g')
+      .call(y_axis)
+      .attr("class", "axis")
+      .attr("transform", "translate(" + padding + ", 0)");
+    // x axis label
+    container_2_plot.append("text")
+      .attr("class", "axis_label")
+      .attr("x", container_width/2)
+      .attr("y", container_height - padding)
+      .attr("text-anchor", "middle")
+      .text("Time(s)");
+    // y axis label
+    container_2_plot.append("text")
+      .attr("class", "axis_label")
+      .attr("x", -(container_width/2))
+      .attr("y", 5)
+      .attr("text-anchor", "middle")
+      .attr("transform", "rotate(-90)")
+      .text(`Level ${depth}`);
+  
+    // console.log(sortedTimeArray[0]);
+  
+    rects.enter().append('rect')
+      .attr("x", padding)
+      .attr('y', (d,i) => {return y(i)})
+      .attr('height', y.bandwidth())
+      .attr('width', d => {
+        return x(d.data.time)
+      })
+      .attr('fill', 'blue')
+      .style('opacity', '0.5')
   
     
+  } 
+  
+ 
+  update(timeArray, currentDepth);
   
   
-  // for (child in data.descendants()){
-  //   if(child.depth === 2){
-  //     console.log(child)
-  //   }
-  // }
-  // console.log(d3.max(data, d => d.time));
-  // console.log("depth: " + data.depth + ", name: " + data.data.task_name + ", time: " + data.data.time)
 }
+
+//data should be timeArray
 
 
 
