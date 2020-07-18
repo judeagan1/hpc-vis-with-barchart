@@ -83,3 +83,7 @@ h1{
   top: 50%;
   left: 100%;
 }
+
+.bar:hover {
+  fill: orangered ;
+}
