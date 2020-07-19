@@ -111,6 +111,20 @@ var globalRoot;
 // declares a tree 
 var treemap = d3.tree().size([container_width - padding, container_height - padding]);
 
+//tooltips for bar-chart and tree
+var tip = d3.tip().attr('class','d3-tip')
+    .html(d => {
+      var text = "<strong>Name:</strong> <span style='color:red'>" + d.data.task_name + "</span><br>";
+      text += "<strong>Time:</strong> <span style='color:red'>" + d.data.time + "</span><br>";
+      if (d.data.children_count != 0){
+        text += "<strong>Children:</strong> <span style='color:red'>" + d.data.children_count + "</span><br>";
+      }
+      if (d.data.tag != null){
+        text += "<strong>Tag:</strong> <span style='color:red'>" + d.data.tag + "</span><br>";
+      }
+      return text
+    });
+
 // Read Json file
 d3.json("data/visual_sys.json").then( treeData => {
   // console.log(treeData); 
@@ -141,18 +155,6 @@ d3.json("data/visual_sys.json").then( treeData => {
 
 function draw_tree(root)
 {
-  //tool tip init for tree
-  var tip = d3.tip().attr('class','d3-tip')
-    .html(d => {
-      var text = "<strong>Name:</strong> <span style='color:red'>" + d.data.task_name + "</span><br>";
-      text += "<strong>Time:</strong> <span style='color:red'>" + d.data.time + "</span><br>";
-      text += "<strong>Children:</strong> <span style='color:red'>" + d.data.children_count + "</span><br>";
-      if (d.data.tag != null){
-        text += "<strong>Tag:</strong> <span style='color:red'>" + d.data.tag + "</span><br>";
-      }
-      return text
-    });
-
     // draw the links between the nodes
   var link = container_1_plot.selectAll(".link")
     .data( root.descendants().slice(1))
@@ -298,19 +300,6 @@ function draw_bars(data)
   console.log("Nodes at L" + data.depth + ": ", nodeCount);
 
   var currentDepth = data.depth;
-
-  var tip = d3.tip().attr('class','d3-tip')
-    .html(d => {
-      var text = "<strong>Name:</strong> <span style='color:red'>" + d.data.task_name + "</span><br>";
-      text += "<strong>Time:</strong> <span style='color:red'>" + d.data.time + "</span><br>";
-      text += "<strong>Children:</strong> <span style='color:red'>" + d.data.children_count + "</span><br>";
-      if (d.data.tag != null){
-        text += "<strong>Tag:</strong> <span style='color:red'>" + d.data.tag + "</span><br>";
-      }
-      return text
-    });
-
-
     
   x.domain([0, d3.max(timeArray, d => d.data.time) + 2]);
 
