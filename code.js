@@ -117,7 +117,7 @@ var tip = d3.tip().attr('class','d3-tip')
       var text = "<strong>Name:</strong> <span style='color:red'>" + d.data.task_name + "</span><br>";
       text += "<strong>Time:</strong> <span style='color:red'>" + d.data.time + "</span><br>";
       if (d.data.children_count != 0){
-        text += "<strong>Children:</strong> <span style='color:red'>" + d.data.children_count + "</span><br>";
+        text += "<strong>children:</strong> <span style='color:red'>" + d.data.children_count+ "</span><br>";
       }
       if (d.data.tag != null){
         text += "<strong>Tag:</strong> <span style='color:red'>" + d.data.tag + "</span><br>";
