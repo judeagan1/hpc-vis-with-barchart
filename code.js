@@ -25,7 +25,7 @@ var container_1 = svg.append('rect')
 
 // draw second container 
 var container_2 = svg.append('rect')
-.attr('fill', '#90c890')
+.attr('fill', '#c5e3f6')
 .attr('stroke', 'black')
 .attr('x', container_width + padding*2)
 .attr('y', padding)
@@ -117,7 +117,7 @@ var tip = d3.tip().attr('class','d3-tip')
       var text = "<strong>Name:</strong> <span style='color:red'>" + d.data.task_name + "</span><br>";
       text += "<strong>Time:</strong> <span style='color:red'>" + d.data.time + "</span><br>";
       if (d.data.children_count != 0){
-        text += "<strong>children:</strong> <span style='color:red'>" + d.data.children_count+ "</span><br>";
+        text += "<strong>Children:</strong> <span style='color:red'>" + d.data.children_count+ "</span><br>";
       }
       if (d.data.tag != null){
         text += "<strong>Tag:</strong> <span style='color:red'>" + d.data.tag + "</span><br>";
@@ -239,37 +239,47 @@ function graph_display()
 
 var transition = d3.transition().duration(500);
 
-var x = d3.scaleLinear()
+var x = d3.scaleBand()
       .range([0, (container_width - padding *2)])
-
-  var y = d3.scaleBand()
-      .range([(container_height - padding*2),0])
       .padding(0.2)
 
-  var x_axis = container_2_plot.append('g')
+var y = d3.scaleLinear()
+      .range([(container_height - padding*2),0])
+
+var z = d3.scaleOrdinal(d3.schemeSet2);
+      
+
+var x_axis = container_2_plot.append('g')
       .attr("transform", "translate(" + padding + ", " + (container_height - padding*2) + ")")
       
     
-  var y_axis = container_2_plot.append('g')
+var y_axis = container_2_plot.append('g')
       .attr("transform", "translate(" + padding + ", 0)")
 
-      container_2_plot.append("text")
-      .attr("class", "axis_label")
-      .attr("x", container_width/2)
-      .attr("y", container_height - padding)
-      .attr("text-anchor", "middle")
-      .text("Time(s)");
+var x_label = container_2_plot.append("text")
+    .attr("class", "axis_label")
+    .attr("x", container_width/2)
+    .attr("y", container_height - padding)
+    .attr("text-anchor", "middle")
+    
 
-
-   var y_label = container_2_plot.append("text")
+var y_label = container_2_plot.append("text")
       .attr("class", "axis_label")
       .attr("x", -(container_width/2))
       .attr("y", 5)
       .attr("text-anchor", "middle")
       .attr("transform", "rotate(-90)")
+      .text("Time(s)");
+
+
+
+
+      
 // Draw bar chat
 function draw_bars(data)
 {
+
+  var keys = "time"
   //array storing all of the nodes for a specific depth in order to extract their time data
   let timeArray = [];
   
@@ -283,10 +293,14 @@ function draw_bars(data)
     }
   });
 
+  timeArray.forEach(node =>{
+    node.time = node.data.time
+  })
+
   // longest task runtime at depth level the variable is not technically needed here
   var maxTimeForDepth = d3.max(timeArray, d => d.data.time);
 
-  console.log("Longest time for a task: ", maxTimeForDepth);
+  // console.log("Longest time for a task: ", maxTimeForDepth);
 
   //sort task runtimes in descending order (could make toggleable)
   timeArray.sort((x, y) => {
@@ -297,13 +311,16 @@ function draw_bars(data)
   //used to set the domain when only working with 1 process
   var nodeCount = timeArray.length;
   
-  console.log("Nodes at L" + data.depth + ": ", nodeCount);
+  // console.log("Nodes at L" + data.depth + ": ", nodeCount);
 
   var currentDepth = data.depth;
-    
-  x.domain([0, d3.max(timeArray, d => d.data.time) + 2]);
 
-  y.domain(timeArray.map(function(d,i) { return i }));
+  
+  x.domain(timeArray.map(d => {
+    return d.depth;
+  }));
+
+  y.domain([0, globalRoot.data.time]);
 
   x_axis.call(d3.axisBottom(x));
   // draw y axis
@@ -311,41 +328,75 @@ function draw_bars(data)
 
   // y axis label
 
-  y_label.text(`Level ${currentDepth}`);
+  x_label.text(`Level ${currentDepth}`);
 
-// console.log(sortedTimeArray[0]);
 
   
-  var rects = container_2_plot.selectAll('rect')
-    .data(timeArray)
+  var up = container_2_plot.append("g")
+      .data(timeArray)
 
-  //remove old bars
-  rects.exit().remove()
-
-
-  rects
-  .attr("x", padding)
-  .attr('y', (d,i) => {return y(i)})
-  .attr('height', y.bandwidth())
-  .attr('width', d => {
-    return x(d.data.time)
-  })
-  
-
-  rects
-  .enter()
-  .append("rect") // Add a new rect for each new elements
-    .attr("x", padding)
-    .attr('y', (d,i) => {return y(i)})
-    .attr('height', y.bandwidth())
-    .attr('class', "bar")
-    .attr('width', d => {
-      return x(d.data.time)
+   up
+   .selectAll("g")
+   .data(d3.stack().keys(['time'])(timeArray))
+   .enter().append("g")
+   .selectAll("rect")
+   .data( d =>  {
+   return d;
+   })
+   .enter().append("rect")
+   .attr("fill",  (d, i) =>  {
+    return z(i);
     })
-    .attr('fill', 'blue')
-    .style('opacity', '0.5')
-    .on('mouseover', tip.show)
-    .on('mouseout', tip.hide)
+   .attr("x",  d =>  {
+   return (container_width/2 - x.bandwidth()/2);
+   })
+   .attr("y",  d =>  {
+      return y(d[1]);
+   })
+   
+   .attr("height",  d =>  {
+     if (timeArray.length === 1){
+       return y(d[0])
+     }
+     else{
+       return(y(d[0]) - y(d[1]))
+     }
+   })
+   .attr("width", x.bandwidth())
+   .on('mouseover', tip.show)
+   .on('mouseout', tip.hide);
+
+
+  // var rects = container_2_plot.selectAll('rect')
+  //   .data(timeArray)
+
+  // //remove old bars
+  // rects.exit().remove()
+
+
+  // rects
+  // .attr("x", padding)
+  // .attr('y', (d,i) => {return y(i)})
+  // .attr('height', y.bandwidth())
+  // .attr('width', d => {
+  //   return x(d.data.time)
+  // })
+  
+
+  // rects
+  // .enter()
+  // .append("rect") // Add a new rect for each new elements
+  //   .attr("x", padding)
+  //   .attr('y', (d,i) => {return y(i)})
+  //   .attr('height', y.bandwidth())
+  //   .attr('class', "bar")
+  //   .attr('width', d => {
+  //     return x(d.data.time)
+  //   })
+  //   .attr('fill', 'blue')
+  //   .style('opacity', '0.5')
+  //   .on('mouseover', tip.show)
+  //   .on('mouseout', tip.hide)
   
   container_2_plot.call(tip)
 } 
