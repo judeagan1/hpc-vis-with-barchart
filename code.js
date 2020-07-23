@@ -305,16 +305,14 @@ function draw_bars(data)
  for (key in timeObject){
   keys.push(key);
 }
-console.log(keys)
+
 
   //bar tooltips
   var barTip = d3.tip().attr('class','d3-tip')
   .html(d => {
-    let text;
-    var keys = Object.keys(d.data);
-      // console.log(keys)
-      text += "<strong>Name:</strong> <span style='color:red'>" + + "</span><br>";
-      text += "<strong>Time:</strong> <span style='color:red'>" + d.data.time + "</span><br>";
+    var text= "";
+      text += "<strong>Name:</strong> <span style='color:red'>" + d.key + "</span><br>";
+      text += "<strong>Time:</strong> <span style='color:red'>" + d[0].data[d.key].toFixed(2)+ "(s)" + "</span><br>";
     
     return text;
   });
@@ -328,33 +326,61 @@ console.log(keys)
   y.domain(timeArray.length);
 
   x_axis.call(d3.axisBottom(x));
+
   // draw y axis
   y_axis.call(d3.axisLeft(y));
 
-  // x axis label
+  // y axis label
   y_label.text(`Level ${currentDepth}`);
 
+  var stackedBarData = d3.stack().keys(keys)(timeArray)
 
 
-var bars = container_2_plot.append("g")
-  .data(timeArray)
+  var barContainer = container_2_plot.selectAll("rect").data(stackedBarData)
 
-bars.exit().remove();
+      barContainer.exit().remove()
 
-bars
-    .selectAll("g")
-    .data(d3.stack().keys(keys)(timeArray))
-    .enter().append("g")
-      .attr("fill", function(d) { return z(d.key); })
-    .selectAll("rect")
-    .data(function(d) { return d; })
-    .enter().append("rect")
-      .attr("y", function(d) { return y(d[keys]); })	    //.attr("x", function(d) { return x(d.data.State); })
-      .attr("x", function(d) { return x(d[0])+ padding + 1; })			    //.attr("y", function(d) { return y(d[1]); })	
-      .attr("width", function(d) { return x(d[1]) - x(d[0]); })	//.attr("height", function(d) { return y(d[0]) - y(d[1]); })
-      .attr("height", y.bandwidth())
-      .on('mouseover', barTip.show)
-      .on('mouseout', barTip.hide);
+      var barsEnter = barContainer.enter().append("rect")
+
+      barsEnter
+        .attr("fill", function(d) { return z(d.key); })
+        .attr("y", function(d) { return y(d[keys]); })	    
+        .attr("x", function(d) { return x(d[0][0])+ padding + 1; })
+        .attr("width", function(d) { return x(d[0][1]) - x(d[0][0]); })
+        .attr("height", y.bandwidth())
+        .on('mouseover', barTip.show)
+        .on('mouseout', barTip.hide);
+
+      barContainer = barContainer.merge(barsEnter)
+
+      barContainer.transition().duration(2000)
+        .attr("fill", function(d) { return z(d.key); })
+        .attr("y", function(d) { return y(d[keys]); })	    
+        .attr("x", function(d) { return x(d[0][0])+ padding + 1; })
+        .attr("width", function(d) { return x(d[0][1]) - x(d[0][0]); })
+        .attr("height", y.bandwidth())
+
+
+
+// var bars = container_2_plot.append("g")
+//   .data(timeArray)
+
+// bars.exit().remove();
+
+// bars
+//     .selectAll("g")
+//     .data(d3.stack().keys(keys)(timeArray))
+//     .enter().append("g")
+//       .attr("fill", function(d) { return z(d.key); })
+//     .selectAll("rect")
+//     .data(function(d) { return d; })
+//     .enter().append("rect")
+//       .attr("y", function(d) { return y(d[keys]); })	    
+//       .attr("x", function(d) { return x(d[0])+ padding + 1; })
+//       .attr("width", function(d) { return x(d[1]) - x(d[0]); })
+//       .attr("height", y.bandwidth())
+//       .on('mouseover', barTip.show)
+//       .on('mouseout', barTip.hide);
   
 
       
