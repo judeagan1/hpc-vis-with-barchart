@@ -236,15 +236,15 @@ function graph_display()
 
 // 3. TO DO: draw graph (also need to consider the drop down value)
 
-
 var transition = d3.transition().duration(500);
 
-var x = d3.scaleBand()
-      .range([0, (container_width - padding *2)])
+var y = d3.scaleBand()
+      .range([(container_height - padding*2),0])
       .padding(0.2)
 
-var y = d3.scaleLinear()
-      .range([(container_height - padding*2),0])
+var x = d3.scaleLinear()
+      .range([0, (container_width - padding *2)])
+      
 
 var z = d3.scaleOrdinal(d3.schemeSet2);
       
@@ -261,6 +261,7 @@ var x_label = container_2_plot.append("text")
     .attr("x", container_width/2)
     .attr("y", container_height - padding)
     .attr("text-anchor", "middle")
+    .text("Time(s)");
     
 
 var y_label = container_2_plot.append("text")
@@ -269,7 +270,6 @@ var y_label = container_2_plot.append("text")
       .attr("y", 5)
       .attr("text-anchor", "middle")
       .attr("transform", "rotate(-90)")
-      .text("Time(s)");
 
 
 
@@ -279,9 +279,9 @@ var y_label = container_2_plot.append("text")
 function draw_bars(data)
 {
 
-  var keys = "time"
-  //array storing all of the nodes for a specific depth in order to extract their time data
-  let timeArray = [];
+  //array storing all of the nodes time and name for a specific depth in order to extract their time data
+  timeArray = []
+  let timeObject = {};
   
   //upon clicking a node, this displays all of its siblings, shows how many siblings there are,
   //and stores all sibling nodes to access their time data conveniently
@@ -289,86 +289,82 @@ function draw_bars(data)
 
     if(node.depth === data.depth){
       // console.log(node)
-      timeArray.push(node);
+      if (timeObject[node.data.task_name] === undefined){
+        timeObject[node.data.task_name] = node.data.time;
+      }
+      else if (timeObject[node.data.task_name] !== undefined){
+        timeObject[node.data.task_name] += node.data.time;
+      }
+      
     }
   });
 
-  timeArray.forEach(node =>{
-    node.time = node.data.time
-  })
+ timeArray.push(timeObject)
+// keys for building stacked bars
+ var keys = []
+ for (key in timeObject){
+  keys.push(key);
+}
+console.log(keys)
 
-  // longest task runtime at depth level the variable is not technically needed here
-  var maxTimeForDepth = d3.max(timeArray, d => d.data.time);
-
-  // console.log("Longest time for a task: ", maxTimeForDepth);
-
-  //sort task runtimes in descending order (could make toggleable)
-  timeArray.sort((x, y) => {
-    return d3.ascending(x.data.time, y.data.time);
+  //bar tooltips
+  var barTip = d3.tip().attr('class','d3-tip')
+  .html(d => {
+    let text;
+    var keys = Object.keys(d.data);
+      // console.log(keys)
+      text += "<strong>Name:</strong> <span style='color:red'>" + + "</span><br>";
+      text += "<strong>Time:</strong> <span style='color:red'>" + d.data.time + "</span><br>";
+    
+    return text;
   });
 
-  //tracks how many nodes are at a specific depth
-  //used to set the domain when only working with 1 process
-  var nodeCount = timeArray.length;
-  
-  // console.log("Nodes at L" + data.depth + ": ", nodeCount);
 
   var currentDepth = data.depth;
 
   
-  x.domain(timeArray.map(d => {
-    return d.depth;
-  }));
+  x.domain([0, globalRoot.data.time]);
 
-  y.domain([0, globalRoot.data.time]);
+  y.domain(timeArray.length);
 
   x_axis.call(d3.axisBottom(x));
   // draw y axis
   y_axis.call(d3.axisLeft(y));
 
-  // y axis label
+  // x axis label
+  y_label.text(`Level ${currentDepth}`);
 
-  x_label.text(`Level ${currentDepth}`);
 
 
+var bars = container_2_plot.append("g")
+  .data(timeArray)
+
+bars.exit().remove();
+
+bars
+    .selectAll("g")
+    .data(d3.stack().keys(keys)(timeArray))
+    .enter().append("g")
+      .attr("fill", function(d) { return z(d.key); })
+    .selectAll("rect")
+    .data(function(d) { return d; })
+    .enter().append("rect")
+      .attr("y", function(d) { return y(d[keys]); })	    //.attr("x", function(d) { return x(d.data.State); })
+      .attr("x", function(d) { return x(d[0])+ padding + 1; })			    //.attr("y", function(d) { return y(d[1]); })	
+      .attr("width", function(d) { return x(d[1]) - x(d[0]); })	//.attr("height", function(d) { return y(d[0]) - y(d[1]); })
+      .attr("height", y.bandwidth())
+      .on('mouseover', barTip.show)
+      .on('mouseout', barTip.hide);
   
-  var up = container_2_plot.append("g")
-      .data(timeArray)
 
-   up
-   .selectAll("g")
-   .data(d3.stack().keys(['time'])(timeArray))
-   .enter().append("g")
-   .selectAll("rect")
-   .data( d =>  {
-   return d;
-   })
-   .enter().append("rect")
-   .attr("fill",  (d, i) =>  {
-    return z(i);
-    })
-   .attr("x",  d =>  {
-   return (container_width/2 - x.bandwidth()/2);
-   })
-   .attr("y",  d =>  {
-      return y(d[1]);
-   })
-   
-   .attr("height",  d =>  {
-     if (timeArray.length === 1){
-       return y(d[0])
-     }
-     else{
-       return(y(d[0]) - y(d[1]))
-     }
-   })
-   .attr("width", x.bandwidth())
-   .on('mouseover', tip.show)
-   .on('mouseout', tip.hide);
+      
+
+
+
 
 
   // var rects = container_2_plot.selectAll('rect')
-  //   .data(timeArray)
+  //   .data(timeObject)
 
   // //remove old bars
   // rects.exit().remove()
@@ -398,7 +394,7 @@ function draw_bars(data)
   //   .on('mouseover', tip.show)
   //   .on('mouseout', tip.hide)
   
-  container_2_plot.call(tip)
+  container_2_plot.call(barTip)
 } 
 
 
