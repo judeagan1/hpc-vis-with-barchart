@@ -10,7 +10,7 @@ const svg_height = container_height + padding*2;
 var svg = d3.select('#svg_chart').append('svg')
   .attr('width', svg_width)
   .attr('height', svg_height)
-  .style("background", "#E5EDB5");
+  .style("background", 'none');
 
 
 // draw first container 
@@ -114,13 +114,13 @@ var treemap = d3.tree().size([container_width - padding, container_height - padd
 //tooltips for bar-chart and tree
 var tip = d3.tip().attr('class','d3-tip')
     .html(d => {
-      var text = "<strong>Name:</strong> <span style='color:red'>" + d.data.task_name + "</span><br>";
-      text += "<strong>Time:</strong> <span style='color:red'>" + d.data.time + "</span><br>";
+      var text = "<strong>Name:</strong> <span style='color:#ff9f68'>" + d.data.task_name + "</span><br>";
+      text += "<strong>Time:</strong> <span style='color:#ff9f68'>" + d.data.time + "</span><br>";
       if (d.data.children_count != 0){
-        text += "<strong>Children:</strong> <span style='color:red'>" + d.data.children_count+ "</span><br>";
+        text += "<strong>Children:</strong> <span style='color:#ff9f68'>" + d.data.children_count+ "</span><br>";
       }
       if (d.data.tag != null){
-        text += "<strong>Tag:</strong> <span style='color:red'>" + d.data.tag + "</span><br>";
+        text += "<strong>Tag:</strong> <span style='color:#ff9f68'>" + d.data.tag + "</span><br>";
       }
       return text
     });
@@ -311,8 +311,8 @@ function draw_bars(data)
   var barTip = d3.tip().attr('class','d3-tip')
   .html(d => {
     var text= "";
-      text += "<strong>Name:</strong> <span style='color:red'>" + d.key + "</span><br>";
-      text += "<strong>Time:</strong> <span style='color:red'>" + d[0].data[d.key].toFixed(2)+ "(s)" + "</span><br>";
+      text += "<strong>Name:</strong> <span style='color:#ff9f68'>" + d.key + "</span><br>";
+      text += "<strong>Time:</strong> <span style='color:#ff9f68'>" + d[0].data[d.key].toFixed(2)+ "(s)" + "</span><br>";
     
     return text;
   });
@@ -333,13 +333,15 @@ function draw_bars(data)
   // y axis label
   y_label.text(`Level ${currentDepth}`);
 
+  console.log(timeArray.length)
+
   var stackedBarData = d3.stack().keys(keys)(timeArray)
 
 
   var barContainer = container_2_plot.selectAll("rect").data(stackedBarData)
 
       barContainer.exit().remove()
-
+    
       var barsEnter = barContainer.enter().append("rect")
 
       barsEnter
@@ -360,35 +362,9 @@ function draw_bars(data)
         .attr("width", function(d) { return x(d[0][1]) - x(d[0][0]); })
         .attr("height", y.bandwidth())
 
-
-
-// var bars = container_2_plot.append("g")
-//   .data(timeArray)
-
-// bars.exit().remove();
-
-// bars
-//     .selectAll("g")
-//     .data(d3.stack().keys(keys)(timeArray))
-//     .enter().append("g")
-//       .attr("fill", function(d) { return z(d.key); })
-//     .selectAll("rect")
-//     .data(function(d) { return d; })
-//     .enter().append("rect")
-//       .attr("y", function(d) { return y(d[keys]); })	    
-//       .attr("x", function(d) { return x(d[0])+ padding + 1; })
-//       .attr("width", function(d) { return x(d[1]) - x(d[0]); })
-//       .attr("height", y.bandwidth())
-//       .on('mouseover', barTip.show)
-//       .on('mouseout', barTip.hide);
   
 
-      
-
-
-
-
-
+  //displays every node at a particular depth as an independent bar -- keeping this in case we need to use it for some reason in the future
   // var rects = container_2_plot.selectAll('rect')
   //   .data(timeObject)
 
