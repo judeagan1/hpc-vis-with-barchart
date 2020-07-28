@@ -5,7 +5,7 @@
 	"tasks": [
 		{
 			"task_name": "init",
-			"children_count": 1,
+			"children_count": 0,
 			"time": 5,
 			"tag": "COMPUTE"
 		},

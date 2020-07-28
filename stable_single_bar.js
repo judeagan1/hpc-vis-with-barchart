@@ -25,7 +25,7 @@ var container_1 = svg.append('rect')
 
 // draw second container 
 var container_2 = svg.append('rect')
-.attr('fill', '#efecec')
+.attr('fill', '#c5e3f6')
 .attr('stroke', 'black')
 .attr('x', container_width + padding*2)
 .attr('y', padding)
@@ -104,6 +104,8 @@ var dorp_down = d3.select("#drop_down")
 
 
 
+
+
 // 1. TO DO: draw tree structure of the tree
 var globalRoot;
 // declares a tree 
@@ -131,34 +133,14 @@ d3.json("data/visual_sys.json").then( treeData => {
   root.x0 = container_height / 2;
   root.y0 = 0;
 
-  
   globalRoot = root;
   // Assigns the x and y position for the nodes
   treeRoot = treemap(root);
   // draw tree
   draw_tree(treeRoot);
 
-  // draw_bars(root);
- 
-});
-
-var multipleProcess;
-d3.json("data/aggregated_perf_data.json").then( data => {
-  
-  // Assign parent, children, height, depth
-  var root = d3.hierarchy( data, d => { return d.children; });
-  // root.x0 = container_height / 2;
-  // root.y0 = 0;
-  multipleProcess = data;
-  // console.log(root)
-  // globalRoot = root;
-  // // Assigns the x and y position for the nodes
-  // treeRoot = treemap(root);
-  // // draw tree
-  // draw_tree(treeRoot);
-
-  draw_bars(data);
-
+  draw_bars(root);
+  // to get time time_data map()filter()
 });
 
 
@@ -264,9 +246,7 @@ var x = d3.scaleLinear()
       .range([0, (container_width - padding *2)])
       
 
-var z = d3.scaleOrdinal().range(["#88d498", "#4dc32c", "#bef43d", "#387e73", "#33c199", "#87ff9d", "#2469ba", "#75cffa", 
-"#bd5dfd", "#891bb0", "#f16391", "#feadc0", 
-"#c6281c", "#f95a00", "#ff9e32", "#ffe07a"]);
+var z = d3.scaleOrdinal(d3.schemeSet2);
       
 
 var x_axis = container_2_plot.append('g')
@@ -299,51 +279,27 @@ var y_label = container_2_plot.append("text")
 function draw_bars(data)
 {
 
-  // console.log(globalRoot)
-  // console.log(multipleProcess)
-
   //array storing all of the nodes time and name for a specific depth in order to extract their time data
-  let timeArray = []
+  timeArray = []
   let timeObject = {};
-
+  
   //upon clicking a node, this displays all of its siblings, shows how many siblings there are,
   //and stores all sibling nodes to access their time data conveniently
-  multipleProcess.forEach(process => {
-    // console.log(process.rank)
-    
-    timeObject['rank'] = process.rank
-    children = process.children
-    processHierarchy = d3.hierarchy( children, d => { return d.children; });
-    console.log(processHierarchy)
-    timeArray.push(timeObject);
-    // timeObject = {}
-    
+  globalRoot.descendants().forEach(node => {
+
+    if(node.depth === data.depth){
+      // console.log(node)
+      if (timeObject[node.data.task_name] === undefined){
+        timeObject[node.data.task_name] = node.data.time;
+      }
+      else if (timeObject[node.data.task_name] !== undefined){
+        timeObject[node.data.task_name] += node.data.time;
+      }
+      
+    }
   });
-  console.log(timeArray)
 
-
-  // click on a segment in a stacked bar
-  // var processArray = []
-  // timeArray.forEach(process =>{
-  //   processHierarchy = d3.hierarchy( process, d => { return d.children; });
-  //   processArray.push(processHierarchy)
-  // });
-  
-  // var testlist= []
-  
-  // processArray.forEach(process => {
-  //   process.forEach(node =>{
-  //     if (node.depth == data.depth)
-  //       testlist.push(node)
-  //   })
-  // })
-  // console.log(testlist)
-
-
-
-
-//  console.log(timeObject)
-//  timeArray.push(timeObject);
+ timeArray.push(timeObject)
 // keys for building stacked bars
  var keys = []
  for (key in timeObject){
@@ -377,6 +333,8 @@ function draw_bars(data)
   // y axis label
   y_label.text(`Level ${currentDepth}`);
 
+  console.log(timeArray.length)
+
   var stackedBarData = d3.stack().keys(keys)(timeArray)
 
 
@@ -388,21 +346,21 @@ function draw_bars(data)
 
       barsEnter
         .attr("fill", function(d) { return z(d.key); })
-        .attr("y", container_height/2 - y.bandwidth()/2 -padding)	    
-        .attr("x", padding + 1)
+        .attr("y", function(d) { return y(d[keys]); })	    
+        .attr("x", function(d) { return x(d[0][0])+ padding + 1; })
         .attr("width", function(d) { return x(d[0][1]) - x(d[0][0]); })
-        .attr("height", y.bandwidth()/5)
+        .attr("height", y.bandwidth())
         .on('mouseover', barTip.show)
         .on('mouseout', barTip.hide);
 
       barContainer = barContainer.merge(barsEnter)
 
-      barContainer.transition().duration(1500)
+      barContainer.transition().duration(2000)
         .attr("fill", function(d) { return z(d.key); })
-        .attr("y", container_height/2 - y.bandwidth()/2 - padding )	    
+        .attr("y", function(d) { return y(d[keys]); })	    
         .attr("x", function(d) { return x(d[0][0])+ padding + 1; })
         .attr("width", function(d) { return x(d[0][1]) - x(d[0][0]); })
-        .attr("height", y.bandwidth()/5)
+        .attr("height", y.bandwidth())
 
   
 
@@ -453,14 +411,6 @@ function draw_bars(data)
 
 
 // All the code here is just for reference. You can change it freely. 
-
-
-
-
-
-
-
-
 
 
 
