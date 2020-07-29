@@ -4,7 +4,8 @@ const container_width = 800;
 const container_height = 900;
 const svg_width = container_width*3 + padding*4;
 const svg_height = container_height + padding*2;
-
+var start_pro = d3.select("#start_pro").property("value");
+var end_pro = d3.select("#end_pro").property("value");
 
 // draw svg canvas
 var svg = d3.select('#svg_chart').append('svg')
@@ -102,7 +103,7 @@ var dorp_down = d3.select("#drop_down")
 
 
 
-
+//updates the values of start and end processes
 
 // 1. TO DO: draw tree structure of the tree
 var globalRoot;
@@ -147,22 +148,25 @@ d3.json("data/aggregated_perf_data.json").then( data => {
   
   // Assign parent, children, height, depth
   var root = d3.hierarchy( data, d => { return d.children; });
-  // root.x0 = container_height / 2;
-  // root.y0 = 0;
+  
   multipleProcess = data;
-  // console.log(root)
-  // globalRoot = root;
-  // // Assigns the x and y position for the nodes
-  // treeRoot = treemap(root);
-  // // draw tree
-  // draw_tree(treeRoot);
+ 
 
-  draw_bars(data);
+  draw_bars(root, start_pro, end_pro);
 
 });
 
 
 
+//updates when certain processes are selected
+function graph_display()
+  {
+    // Obtained value from input box
+    start_pro = d3.select("#start_pro").property("value");
+    end_pro = d3.select("#end_pro").property("value");
+
+    draw_bars(multipleProcess, start_pro, end_pro);
+  }
 
 
 
@@ -209,7 +213,7 @@ function draw_tree(root)
     .on('mouseover', tip.show)
     .on('mouseout', tip.hide)
     .on('click', d => {
-      draw_bars(d);
+      draw_bars(d,start_pro,end_pro);
 
     });
 
@@ -233,17 +237,10 @@ d3.select("#drop_down").on("change", d =>
   console.log(value);
 });
 
-d3.select("#start_pro").on("input", graph_display);
-d3.select("#end_pro").on("input", graph_display);
+// d3.select("#start_pro").on("input", graph_display);
+// d3.select("#end_pro").on("input", graph_display);
 
-function graph_display()
-{
-  // Obtained value from input box
-  var start_pro = d3.select("#start_pro").property("value");
-  var end_pro = d3.select("#end_pro").property("value");
-  console.log(start_pro);
-  console.log(end_pro);
-}
+
 
 
 
@@ -257,14 +254,15 @@ function graph_display()
 var transition = d3.transition().duration(500);
 
 var y = d3.scaleBand()
-      .range([(container_height - padding*2),0])
-      .padding(0.2)
+      .range([0, (container_height - padding*2)])
+      .paddingInner(0.2)
+      .paddingOuter(0.2)
 
 var x = d3.scaleLinear()
       .range([0, (container_width - padding *2)])
       
 
-var z = d3.scaleOrdinal().range(["#88d498", "#4dc32c", "#bef43d", "#387e73", "#33c199", "#87ff9d", "#2469ba", "#75cffa", 
+var color = d3.scaleOrdinal().range(["#88d498", "#4dc32c", "#bef43d", "#387e73", "#33c199", "#87ff9d", "#2469ba", "#75cffa", 
 "#bd5dfd", "#891bb0", "#f16391", "#feadc0", 
 "#c6281c", "#f95a00", "#ff9e32", "#ffe07a"]);
       
@@ -296,78 +294,92 @@ var y_label = container_2_plot.append("text")
 
       
 // Draw bar chat
-function draw_bars(data)
+function draw_bars(data, start, end)
 {
 
-  // console.log(globalRoot)
-  // console.log(multipleProcess)
-
-  //array storing all of the nodes time and name for a specific depth in order to extract their time data
+  console.log(start, end)
+  // console.log(data)
+  
   let timeArray = []
   let timeObject = {};
 
-  //upon clicking a node, this displays all of its siblings, shows how many siblings there are,
-  //and stores all sibling nodes to access their time data conveniently
-  multipleProcess.forEach(process => {
-    // console.log(process.rank)
-    
+  multipleProcess.forEach(process =>{
+
+    var processHierarchy = d3.hierarchy( process.children, d => { return d.children; });
+    // console.log(processHierarchy)
     timeObject['rank'] = process.rank
-    children = process.children
-    processHierarchy = d3.hierarchy( children, d => { return d.children; });
-    console.log(processHierarchy)
+
+    processHierarchy.descendants().forEach(node => {
+
+      if(node.depth === data.depth){
+        // console.log(node)
+        if (timeObject[node.data.task_name] === undefined){
+          timeObject[node.data.task_name] = node.data.time;
+        }
+        else if (timeObject[node.data.task_name] !== undefined){
+          timeObject[node.data.task_name] += node.data.time;
+        }
+        
+      }
+    });
+
     timeArray.push(timeObject);
-    // timeObject = {}
-    
-  });
-  console.log(timeArray)
+    timeObject = {}
 
 
-  // click on a segment in a stacked bar
-  // var processArray = []
-  // timeArray.forEach(process =>{
-  //   processHierarchy = d3.hierarchy( process, d => { return d.children; });
-  //   processArray.push(processHierarchy)
-  // });
-  
-  // var testlist= []
-  
-  // processArray.forEach(process => {
-  //   process.forEach(node =>{
-  //     if (node.depth == data.depth)
-  //       testlist.push(node)
-  //   })
-  // })
-  // console.log(testlist)
+  })
+
+
+
+if (start > timeArray[timeArray.length-1].rank || start < 0){
+  alert('Chosen starting process out of range. Please choose a starting process within the range of your data.')
+}
+
+if (end > timeArray[timeArray.length-1].rank){
+  alert('Chosen end process out of range. Please choose an end process within the range of your data.')
+}
+
+
+//filters out the objects based on the inputs given by the user
 
 
 
 
-//  console.log(timeObject)
-//  timeArray.push(timeObject);
 // keys for building stacked bars
  var keys = []
- for (key in timeObject){
-  keys.push(key);
+ for (key in timeArray[0]){
+   if (key != 'rank')
+    keys.push(key);
 }
 
 
   //bar tooltips
   var barTip = d3.tip().attr('class','d3-tip')
   .html(d => {
+    // console.log(d)
     var text= "";
-      text += "<strong>Name:</strong> <span style='color:#ff9f68'>" + d.key + "</span><br>";
-      text += "<strong>Time:</strong> <span style='color:#ff9f68'>" + d[0].data[d.key].toFixed(2)+ "(s)" + "</span><br>";
+      text += "<strong>Name:</strong> <span style='color:#ff9f68'>" + d.data.key + "</span><br>";
+      text += "<strong>Time:</strong> <span style='color:#ff9f68'>" + "(s)" + "</span><br>";
     
     return text;
   });
 
+ var newTime = timeArray.filter(d => { if (d.rank >= start && d.rank <= end){
+   return d.rank;
+ }})
+
+
+  var stackedBarData = d3.stack().keys(keys)
 
   var currentDepth = data.depth;
-
   
   x.domain([0, globalRoot.data.time]);
+      y.domain(timeArray.map(d=>{return d.rank}));   
 
-  y.domain(timeArray.length);
+  //need to find out what will be displayed if nothing has been entered. Maybe we can limit it to just the top 5 or possibly just show all processes
+  if( start == false && end == false){
+
+  
 
   x_axis.call(d3.axisBottom(x));
 
@@ -377,32 +389,114 @@ function draw_bars(data)
   // y axis label
   y_label.text(`Level ${currentDepth}`);
 
-  var stackedBarData = d3.stack().keys(keys)(timeArray)
+
+  
+var layer = container_2_plot.selectAll(".layer")
+      .data(stackedBarData(timeArray))
+
+      layer.exit().remove()
+
+var bars = layer
+			.enter().append("g")
+			.attr("class", "layer")
+      .style("fill", function(d, i) { return color(d.key); })
+      .merge(layer)
+      .selectAll('rect')
+      .data(function(d) { return d; });
 
 
-  var barContainer = container_2_plot.selectAll("rect").data(stackedBarData)
-
-      barContainer.exit().remove()
-    
-      var barsEnter = barContainer.enter().append("rect")
-
-      barsEnter
-        .attr("fill", function(d) { return z(d.key); })
-        .attr("y", container_height/2 - y.bandwidth()/2 -padding)	    
-        .attr("x", padding + 1)
-        .attr("width", function(d) { return x(d[0][1]) - x(d[0][0]); })
-        .attr("height", y.bandwidth()/5)
+    bars
+			.enter().append("rect")
+			  .attr("y", function(d) { return y(d.data.rank); })
+			  .attr("x", function(d) { return x(d[0]) +padding + 1; })
+			  .attr("height", y.bandwidth())
+        .attr("width", function(d) { return x(d[1]) - x(d[0]) })
         .on('mouseover', barTip.show)
         .on('mouseout', barTip.hide);
 
-      barContainer = barContainer.merge(barsEnter)
+    bars.merge(bars)
+        .attr("y", function(d) { return y(d.data.rank); })
+			  .attr("x", function(d) { return x(d[0]) +padding + 1; })
+			  .attr("height", y.bandwidth())
+        .attr("width", function(d) { return x(d[1]) - x(d[0]) })
+ 
+}
 
-      barContainer.transition().duration(1500)
-        .attr("fill", function(d) { return z(d.key); })
-        .attr("y", container_height/2 - y.bandwidth()/2 - padding )	    
-        .attr("x", function(d) { return x(d[0][0])+ padding + 1; })
-        .attr("width", function(d) { return x(d[0][1]) - x(d[0][0]); })
-        .attr("height", y.bandwidth()/5)
+else{
+  
+  x.domain([0, globalRoot.data.time]);
+
+  y.domain(newTime.map(d=>{return d.rank}));
+
+  x_axis.call(d3.axisBottom(x));
+
+  // draw y axis
+  y_axis.call(d3.axisLeft(y));
+
+  // y axis label
+  y_label.text(`Level ${currentDepth}`);
+
+
+  var layer = container_2_plot.selectAll(".layer")
+  .data(stackedBarData(newTime))
+
+  layer.exit().remove()
+
+var bars = layer
+  .enter().append("g")
+  .attr("class", "layer")
+  .style("fill", function(d, i) { return color(d.key); })
+  .merge(layer)
+  .selectAll('rect')
+  .data(function(d) { return d; });
+
+
+bars
+  .enter().append("rect")
+    .attr("y", function(d) { return y(d.data.rank); })
+    .attr("x", function(d) { return x(d[0]) +padding + 1; })
+    .attr("height", y.bandwidth())
+    .attr("width", function(d) { return x(d[1]) - x(d[0]) })
+    .on('mouseover', barTip.show)
+    .on('mouseout', barTip.hide)
+
+bars.merge(bars)
+    .attr("y", function(d) { return y(d.data.rank); })
+    .attr("x", function(d) { return x(d[0]) +padding + 1; })
+    .attr("height", y.bandwidth())
+    .attr("width", function(d) { return x(d[1]) - x(d[0]) })
+ }
+ container_2_plot.call(barTip)
+} 
+
+
+
+
+//ALTERNATIVE VERSIONS OF THE BAR CHART
+//*********************************************************************************************** */
+// var bars = container_2_plot.selectAll("rect").data(stackedBarData(timeArray))
+
+
+
+//       bars.exit().remove()
+    
+//       var barsEnter = bars.enter().append("rect")
+
+//       barsEnter
+//         .attr("fill", function(d) { return z(d.key); })
+//         .attr("y", y(50))	    
+//         .attr("x", padding + 1)
+//         .attr("width", 0)
+//         .attr("height", y.bandwidth())
+//         .on('mouseover', barTip.show)
+//         .on('mouseout', barTip.hide);
+
+//       bars = bars.merge(barsEnter)
+
+//       bars.transition().duration(1500)    
+//         .attr("x", function(d) { return x(d[0][0])+ padding + 1; })
+//         .attr("width", function(d) { return x(d[0][1]) - x(d[0][0]); })
+//         .attr("height", y.bandwidth())
 
   
 
@@ -437,15 +531,6 @@ function draw_bars(data)
   //   .style('opacity', '0.5')
   //   .on('mouseover', tip.show)
   //   .on('mouseout', tip.hide)
-  
-  container_2_plot.call(barTip)
-} 
-
-
-
-
-
-
 
 
 

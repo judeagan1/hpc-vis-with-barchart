@@ -246,7 +246,9 @@ var x = d3.scaleLinear()
       .range([0, (container_width - padding *2)])
       
 
-var z = d3.scaleOrdinal(d3.schemeSet2);
+var z = d3.scaleOrdinal().range(["#88d498", "#4dc32c", "#bef43d", "#387e73", "#33c199", "#87ff9d", "#2469ba", "#75cffa", 
+      "#bd5dfd", "#891bb0", "#f16391", "#feadc0", 
+      "#c6281c", "#f95a00", "#ff9e32", "#ffe07a"]);
       
 
 var x_axis = container_2_plot.append('g')
@@ -300,6 +302,7 @@ function draw_bars(data)
   });
 
  timeArray.push(timeObject)
+ 
 // keys for building stacked bars
  var keys = []
  for (key in timeObject){
@@ -333,7 +336,7 @@ function draw_bars(data)
   // y axis label
   y_label.text(`Level ${currentDepth}`);
 
-  console.log(timeArray.length)
+  
 
   var stackedBarData = d3.stack().keys(keys)(timeArray)
 
@@ -346,22 +349,21 @@ function draw_bars(data)
 
       barsEnter
         .attr("fill", function(d) { return z(d.key); })
-        .attr("y", function(d) { return y(d[keys]); })	    
-        .attr("x", function(d) { return x(d[0][0])+ padding + 1; })
+        .attr("y", container_height/2 - y.bandwidth()/2 -padding)	    
+        .attr("x", padding + 1)
         .attr("width", function(d) { return x(d[0][1]) - x(d[0][0]); })
-        .attr("height", y.bandwidth())
+        .attr("height", y.bandwidth()/5)
         .on('mouseover', barTip.show)
         .on('mouseout', barTip.hide);
 
       barContainer = barContainer.merge(barsEnter)
 
-      barContainer.transition().duration(2000)
+      barContainer.transition().duration(1500)
         .attr("fill", function(d) { return z(d.key); })
-        .attr("y", function(d) { return y(d[keys]); })	    
+        .attr("y", container_height/2 - y.bandwidth()/2 - padding )	    
         .attr("x", function(d) { return x(d[0][0])+ padding + 1; })
         .attr("width", function(d) { return x(d[0][1]) - x(d[0][0]); })
-        .attr("height", y.bandwidth())
-
+        .attr("height", y.bandwidth()/5)
   
 
   //displays every node at a particular depth as an independent bar -- keeping this in case we need to use it for some reason in the future
@@ -411,8 +413,6 @@ function draw_bars(data)
 
 
 // All the code here is just for reference. You can change it freely. 
-
-
 
 
 

@@ -1175,7 +1175,7 @@
 		"children": {
 			"task_name": "main",
 			"children_count": 2,
-			"time": 100,
+			"time": 95,
 			"children": [
 				{
 					"task_name": "init",
@@ -2346,7 +2346,7 @@
 		"children": {
 			"task_name": "main",
 			"children_count": 2,
-			"time": 100,
+			"time": 90,
 			"children": [
 				{
 					"task_name": "init",
@@ -3517,7 +3517,7 @@
 		"children": {
 			"task_name": "main",
 			"children_count": 2,
-			"time": 100,
+			"time": 85,
 			"children": [
 				{
 					"task_name": "init",
@@ -4688,7 +4688,7 @@
 		"children": {
 			"task_name": "main",
 			"children_count": 2,
-			"time": 100,
+			"time": 80,
 			"children": [
 				{
 					"task_name": "init",
