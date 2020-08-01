@@ -78,9 +78,10 @@ var container_3_plot = svg.append('g')
   .attr('transform', `translate(${padding*7/2 + container_width*2}, ${padding*3/2})`);
 
 // drop down options
-var options = ["top_5", "bottle_5", "top_vs_bottle"];
+var options = [" ", "best_5", "worst_5", "best_vs_worst"];
 
-var dorp_down = d3.select("#drop_down")
+
+var drop_down = d3.select("#drop_down")
   .selectAll("options")
   .data(options)
   .enter()
@@ -92,6 +93,7 @@ var dorp_down = d3.select("#drop_down")
     return d[0].toUpperCase() + d.slice(1, d.length).split("_").join(" ");
   });
 
+  var dropDownSelected = d3.select("#drop_down").property("value");
 
 
 
@@ -144,15 +146,16 @@ d3.json("data/visual_sys.json").then( treeData => {
 });
 
 var multipleProcess;
+var barRoot;
 d3.json("data/aggregated_perf_data.json").then( data => {
   
   // Assign parent, children, height, depth
-  var root = d3.hierarchy( data, d => { return d.children; });
+  barRoot = d3.hierarchy( data, d => { return d.children; });
   
   multipleProcess = data;
  
 
-  draw_bars(root, start_pro, end_pro);
+  draw_bars(barRoot, start_pro, end_pro, dropDownSelected);
 
 });
 
@@ -165,7 +168,7 @@ function graph_display()
     start_pro = d3.select("#start_pro").property("value");
     end_pro = d3.select("#end_pro").property("value");
 
-    draw_bars(multipleProcess, start_pro, end_pro);
+    draw_bars(barRoot, start_pro, end_pro, dropDownSelected);
   }
 
 
@@ -230,15 +233,21 @@ function draw_tree(root)
 }
 
 
+
+
+
+
 // 2. TO DO: drop down event
 d3.select("#drop_down").on("change", d => 
 {
-  var value = d3.select("#drop_down").property("value");
-  console.log(value);
+  dropDownSelected = d3.select("#drop_down").property("value");
+  draw_bars(barRoot, start_pro, end_pro, dropDownSelected);
+
 });
 
-// d3.select("#start_pro").on("input", graph_display);
-// d3.select("#end_pro").on("input", graph_display);
+
+
+
 
 
 
@@ -251,7 +260,7 @@ d3.select("#drop_down").on("change", d =>
 
 // 3. TO DO: draw graph (also need to consider the drop down value)
 
-var transition = d3.transition().duration(500);
+var transition = d3.transition().duration(300);
 
 var y = d3.scaleBand()
       .range([0, (container_height - padding*2)])
@@ -294,20 +303,21 @@ var y_label = container_2_plot.append("text")
 
       
 // Draw bar chat
-function draw_bars(data, start, end)
+function draw_bars(data, start, end, drop_down)
 {
 
-  console.log(start, end)
+  
   // console.log(data)
   
   let timeArray = []
   let timeObject = {};
-
   multipleProcess.forEach(process =>{
 
     var processHierarchy = d3.hierarchy( process.children, d => { return d.children; });
     // console.log(processHierarchy)
     timeObject['rank'] = process.rank
+    timeObject['totalTime'] = 0;
+
 
     processHierarchy.descendants().forEach(node => {
 
@@ -315,18 +325,38 @@ function draw_bars(data, start, end)
         // console.log(node)
         if (timeObject[node.data.task_name] === undefined){
           timeObject[node.data.task_name] = node.data.time;
+          timeObject['totalTime'] += node.data.time;
         }
         else if (timeObject[node.data.task_name] !== undefined){
           timeObject[node.data.task_name] += node.data.time;
+          timeObject['totalTime'] += +node.data.time;
         }
-        
+
       }
+
+      //This will keep the length uniform at every depth by displaying previous nodes that have no children
+      if (node.depth < data.depth && node.data.children_count === 0){
+        if (timeObject[node.data.task_name] === undefined){
+          timeObject[node.data.task_name] = node.data.time;
+          timeObject['totalTime'] += +node.data.time;
+         
+        }
+        else if (timeObject[node.data.task_name] !== undefined){
+          timeObject[node.data.task_name] += node.data.time;
+          timeObject['totalTime'] += +node.data.time;
+        }
+      }
+     
     });
 
+    
+   
+    
+    // console.log(timeObject)
     timeArray.push(timeObject);
     timeObject = {}
 
-
+    
   })
 
 
@@ -348,7 +378,7 @@ if (end > timeArray[timeArray.length-1].rank){
 // keys for building stacked bars
  var keys = []
  for (key in timeArray[0]){
-   if (key != 'rank')
+   if (key != 'rank' && key != 'totalTime')
     keys.push(key);
 }
 
@@ -356,73 +386,52 @@ if (end > timeArray[timeArray.length-1].rank){
   //bar tooltips
   var barTip = d3.tip().attr('class','d3-tip')
   .html(d => {
-    // console.log(d)
-    var text= "";
-      text += "<strong>Name:</strong> <span style='color:#ff9f68'>" + d.data.key + "</span><br>";
-      text += "<strong>Time:</strong> <span style='color:#ff9f68'>" + "(s)" + "</span><br>";
+    console.log(d)
     
+    var text= "";
+      text += "<strong>Name:</strong> <span style='color:#ff9f68'>" + "</span><br>";
+      text += "<strong>Time:</strong> <span style='color:#ff9f68'>" + "(s)" + "</span><br>";
+   
     return text;
+    
   });
 
- var newTime = timeArray.filter(d => { if (d.rank >= start && d.rank <= end){
-   return d.rank;
- }})
+
+  // if there are no specific processes given, then just display all processes
+if( start == false && end == false){
+    var newTime = timeArray
+ }
+ else{
+  var newTime = timeArray.filter(d => { if (d.rank >= start && d.rank <= end ){
+    return d.rank;
+  }})
+}
+
+//changes the data set based on the dropdown option selected
+if (drop_down === " "){
+  newTime = newTime;
+}
+else if (drop_down === "best_5"){
+  newTime.sort((a, b) => d3.ascending(a.totalTime, b.totalTime))
+
+}
+else if (drop_down === "worst_5"){
+  newTime.sort((a, b) => d3.descending(a.totalTime, b.totalTime))
+}
+else if (drop_down === "best_vs_worst"){
+  newTime.sort((a, b) => d3.ascending(a.totalTime, b.totalTime))
+  tempTime = newTime
+  newTime = [tempTime[0],tempTime[tempTime.length-1]]
+  console.log(newTime)
+}
+
 
 
   var stackedBarData = d3.stack().keys(keys)
 
+
   var currentDepth = data.depth;
-  
-  x.domain([0, globalRoot.data.time]);
-      y.domain(timeArray.map(d=>{return d.rank}));   
 
-  //need to find out what will be displayed if nothing has been entered. Maybe we can limit it to just the top 5 or possibly just show all processes
-  if( start == false && end == false){
-
-  
-
-  x_axis.call(d3.axisBottom(x));
-
-  // draw y axis
-  y_axis.call(d3.axisLeft(y));
-
-  // y axis label
-  y_label.text(`Level ${currentDepth}`);
-
-
-  
-var layer = container_2_plot.selectAll(".layer")
-      .data(stackedBarData(timeArray))
-
-      layer.exit().remove()
-
-var bars = layer
-			.enter().append("g")
-			.attr("class", "layer")
-      .style("fill", function(d, i) { return color(d.key); })
-      .merge(layer)
-      .selectAll('rect')
-      .data(function(d) { return d; });
-
-
-    bars
-			.enter().append("rect")
-			  .attr("y", function(d) { return y(d.data.rank); })
-			  .attr("x", function(d) { return x(d[0]) +padding + 1; })
-			  .attr("height", y.bandwidth())
-        .attr("width", function(d) { return x(d[1]) - x(d[0]) })
-        .on('mouseover', barTip.show)
-        .on('mouseout', barTip.hide);
-
-    bars.merge(bars)
-        .attr("y", function(d) { return y(d.data.rank); })
-			  .attr("x", function(d) { return x(d[0]) +padding + 1; })
-			  .attr("height", y.bandwidth())
-        .attr("width", function(d) { return x(d[1]) - x(d[0]) })
- 
-}
-
-else{
   
   x.domain([0, globalRoot.data.time]);
 
@@ -436,9 +445,11 @@ else{
   // y axis label
   y_label.text(`Level ${currentDepth}`);
 
-
+  
   var layer = container_2_plot.selectAll(".layer")
   .data(stackedBarData(newTime))
+
+  
 
   layer.exit().remove()
 
@@ -450,22 +461,29 @@ var bars = layer
   .selectAll('rect')
   .data(function(d) { return d; });
 
+bars.exit().remove()
 
 bars
   .enter().append("rect")
     .attr("y", function(d) { return y(d.data.rank); })
     .attr("x", function(d) { return x(d[0]) +padding + 1; })
-    .attr("height", y.bandwidth())
+    .attr("height", Math.min(y.bandwidth(), 400))
     .attr("width", function(d) { return x(d[1]) - x(d[0]) })
-    .on('mouseover', barTip.show)
-    .on('mouseout', barTip.hide)
+    .on('click', d=> {
+      console.log(d)
+    })
+    .on('mouseout', barTip.hide);
 
 bars.merge(bars)
     .attr("y", function(d) { return y(d.data.rank); })
     .attr("x", function(d) { return x(d[0]) +padding + 1; })
-    .attr("height", y.bandwidth())
+    .attr("height", Math.min(y.bandwidth(), 400))
     .attr("width", function(d) { return x(d[1]) - x(d[0]) })
- }
+    .on('mouseover', barTip.show)
+    .on('mouseout', barTip.hide);
+
+
+
  container_2_plot.call(barTip)
 } 
 

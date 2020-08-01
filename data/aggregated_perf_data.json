@@ -4,11 +4,11 @@
 		"children": {
 			"task_name": "main",
 			"children_count": 2,
-			"time": 100,
+			"time": 81,
 			"children": [
 				{
 					"task_name": "init",
-					"children_count": 1,
+					"children_count": 0,
 					"time": 5,
 					"tag": "COMPUTE"
 				},
@@ -1179,7 +1179,7 @@
 			"children": [
 				{
 					"task_name": "init",
-					"children_count": 1,
+					"children_count": 0,
 					"time": 5,
 					"tag": "COMPUTE"
 				},
@@ -2346,11 +2346,11 @@
 		"children": {
 			"task_name": "main",
 			"children_count": 2,
-			"time": 90,
+			"time": 72,
 			"children": [
 				{
 					"task_name": "init",
-					"children_count": 1,
+					"children_count": 0,
 					"time": 5,
 					"tag": "COMPUTE"
 				},
@@ -3517,11 +3517,11 @@
 		"children": {
 			"task_name": "main",
 			"children_count": 2,
-			"time": 85,
+			"time": 100,
 			"children": [
 				{
 					"task_name": "init",
-					"children_count": 1,
+					"children_count": 0,
 					"time": 5,
 					"tag": "COMPUTE"
 				},
@@ -4688,11 +4688,11 @@
 		"children": {
 			"task_name": "main",
 			"children_count": 2,
-			"time": 80,
+			"time": 96,
 			"children": [
 				{
 					"task_name": "init",
-					"children_count": 1,
+					"children_count": 0,
 					"time": 5,
 					"tag": "COMPUTE"
 				},
