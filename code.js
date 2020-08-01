@@ -217,7 +217,19 @@ function draw_tree(root)
     .on('mouseover', tip.show)
     .on('mouseout', tip.hide)
     .on('click', d => {
-      draw_bars(d,start_pro,end_pro);
+      if (start_pro == false && end_pro == false){
+        if (start_pro === 0 ){
+          draw_bars(d,start_pro,end_pro,dropDownSelected);
+        }
+        else{
+          draw_bars(d, undefined, undefined, dropDownSelected)
+        }
+      }
+      else{
+        draw_bars(d, start_pro, end_pro, dropDownSelected)
+      }
+      
+      
 
     });
 
@@ -242,7 +254,17 @@ function draw_tree(root)
 d3.select("#drop_down").on("change", d => 
 {
   dropDownSelected = d3.select("#drop_down").property("value");
-  draw_bars(barRoot, start_pro, end_pro, dropDownSelected);
+  if (start_pro == false && end_pro == false){
+    if (start_pro === 0 ){
+      draw_bars(barRoot,start_pro,end_pro,dropDownSelected);
+    }
+    else{
+      draw_bars(barRoot, undefined, undefined, dropDownSelected)
+    }
+  }
+  else{
+    draw_bars(barRoot, start_pro, end_pro, dropDownSelected)
+  }
 
 });
 
@@ -427,10 +449,16 @@ else if (drop_down === "worst_5"){
   newTime.sort((a, b) => d3.descending(a.totalTime, b.totalTime))
 }
 else if (drop_down === "best_vs_worst"){
-  newTime.sort((a, b) => d3.ascending(a.totalTime, b.totalTime))
+  if (newTime.length === 1){
+    newTime = newTime
+  }
+  else{
+    newTime.sort((a, b) => d3.ascending(a.totalTime, b.totalTime))
   tempTime = newTime
   newTime = [tempTime[0],tempTime[tempTime.length-1]]
   console.log(newTime)
+  }
+  
 }
 
 
