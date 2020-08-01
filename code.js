@@ -473,9 +473,9 @@ bars.exit().remove()
 
 bars
   .enter().append("rect")
-    .attr("y", function(d) { return y(d.data.rank); })
+    .attr("y", function(d) { if(newTime.length === 1){ return container_height/2 - 150 -padding} else{ return y(d.data.rank); }})
     .attr("x", function(d) { return x(d[0]) +padding + 1; })
-    .attr("height", Math.min(y.bandwidth(), 400))
+    .attr("height", Math.min(y.bandwidth(), 300))
     .attr("width", function(d) { return x(d[1]) - x(d[0]) })
     .on('click', d=> {
       console.log(d)
@@ -483,9 +483,9 @@ bars
     .on('mouseout', barTip.hide);
 
 bars.merge(bars)
-    .attr("y", function(d) { return y(d.data.rank); })
+.attr("y", function(d) { if(newTime.length === 1){ return container_height/2  - 150 -padding} else{ return y(d.data.rank); }})
     .attr("x", function(d) { return x(d[0]) +padding + 1; })
-    .attr("height", Math.min(y.bandwidth(), 400))
+    .attr("height", Math.min(y.bandwidth(), 300))
     .attr("width", function(d) { return x(d[1]) - x(d[0]) })
     .on('mouseover', barTip.show)
     .on('mouseout', barTip.hide);
