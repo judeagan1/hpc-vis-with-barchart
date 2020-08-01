@@ -145,6 +145,7 @@ d3.json("data/visual_sys.json").then( treeData => {
  
 });
 
+
 var multipleProcess;
 var barRoot;
 d3.json("data/aggregated_perf_data.json").then( data => {
@@ -155,7 +156,7 @@ d3.json("data/aggregated_perf_data.json").then( data => {
   multipleProcess = data;
  
 
-  draw_bars(barRoot, start_pro, end_pro, dropDownSelected);
+  draw_bars(barRoot, undefined,undefined, dropDownSelected);
 
 });
 
@@ -306,6 +307,7 @@ var y_label = container_2_plot.append("text")
 function draw_bars(data, start, end, drop_down)
 {
 
+  console.log(start, end)
   
   // console.log(data)
   
@@ -397,15 +399,21 @@ if (end > timeArray[timeArray.length-1].rank){
   });
 
 
+
   // if there are no specific processes given, then just display all processes
-if( start == false && end == false){
+if ( start === undefined && end === undefined){
     var newTime = timeArray
  }
+
  else{
-  var newTime = timeArray.filter(d => { if (d.rank >= start && d.rank <= end ){
-    return d.rank;
-  }})
+   var newTime = [];
+   timeArray.forEach(process => {
+     if (process.rank >= start && process.rank <= end){
+       newTime.push(process);
+     }
+   })
 }
+
 
 //changes the data set based on the dropdown option selected
 if (drop_down === " "){
