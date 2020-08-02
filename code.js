@@ -413,8 +413,8 @@ if (end > timeArray[timeArray.length-1].rank){
     console.log(d)
     
     var text= "";
-      text += "<strong>Name:</strong> <span style='color:#ff9f68'>" + "</span><br>";
-      text += "<strong>Time:</strong> <span style='color:#ff9f68'>" + "(s)" + "</span><br>";
+      text += "<strong>Name:</strong> <span style='color:#ff9f68'>" + d.key + "</span><br>";
+      // text += "<strong>Time:</strong> <span style='color:#ff9f68'>" + "(s)" + "</span><br>";
    
     return text;
     
@@ -465,7 +465,6 @@ else if (drop_down === "best_vs_worst"){
 
   var stackedBarData = d3.stack().keys(keys)
 
-
   var currentDepth = data.depth;
 
   
@@ -493,6 +492,8 @@ var bars = layer
   .enter().append("g")
   .attr("class", "layer")
   .style("fill", function(d, i) { return color(d.key); })
+  .on('mouseover', barTip.show)
+  .on('mouseout', barTip.hide)
   .merge(layer)
   .selectAll('rect')
   .data(function(d) { return d; });
@@ -505,18 +506,13 @@ bars
     .attr("x", function(d) { return x(d[0]) +padding + 1; })
     .attr("height", Math.min(y.bandwidth(), 300))
     .attr("width", function(d) { return x(d[1]) - x(d[0]) })
-    .on('click', d=> {
-      console.log(d)
-    })
-    .on('mouseout', barTip.hide);
+    
 
 bars.merge(bars)
 .attr("y", function(d) { if(newTime.length === 1){ return container_height/2  - 150 -padding} else{ return y(d.data.rank); }})
     .attr("x", function(d) { return x(d[0]) +padding + 1; })
     .attr("height", Math.min(y.bandwidth(), 300))
     .attr("width", function(d) { return x(d[1]) - x(d[0]) })
-    .on('mouseover', barTip.show)
-    .on('mouseout', barTip.hide);
 
 
 
