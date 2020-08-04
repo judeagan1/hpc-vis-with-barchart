@@ -228,8 +228,6 @@ function draw_tree(root)
       else{
         draw_bars(d, start_pro, end_pro, dropDownSelected)
       }
-      
-      
 
     });
 
@@ -328,8 +326,6 @@ var y_label = container_2_plot.append("text")
 // Draw bar chat
 function draw_bars(data, start, end, drop_down)
 {
-
-  console.log(start, end)
   
   // console.log(data)
   
@@ -410,7 +406,7 @@ if (end > timeArray[timeArray.length-1].rank){
   //bar tooltips
   var barTip = d3.tip().attr('class','d3-tip')
   .html(d => {
-    console.log(d)
+    // console.log(d)
     
     var text= "";
       text += "<strong>Name:</strong> <span style='color:#ff9f68'>" + d.key + "</span><br>";
@@ -491,7 +487,7 @@ else if (drop_down === "best_vs_worst"){
 var bars = layer
   .enter().append("g")
   .attr("class", "layer")
-  .style("fill", function(d, i) { return color(d.key); })
+  .style("fill", function(d) { return color(d.key); })
   .on('mouseover', barTip.show)
   .on('mouseout', barTip.hide)
   .merge(layer)
@@ -506,6 +502,7 @@ bars
     .attr("x", function(d) { return x(d[0]) +padding + 1; })
     .attr("height", Math.min(y.bandwidth(), 300))
     .attr("width", function(d) { return x(d[1]) - x(d[0]) })
+    .on('click', d => {console.log(d[1] - d[0])})
     
 
 bars.merge(bars)
