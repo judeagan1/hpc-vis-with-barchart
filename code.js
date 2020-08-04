@@ -460,8 +460,6 @@ else if (drop_down === "best_vs_worst"){
   
 }
 
-
-
   var stackedBarData = d3.stack().keys(keys)
 
   var currentDepth = data.depth;
