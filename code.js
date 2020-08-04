@@ -406,11 +406,21 @@ if (end > timeArray[timeArray.length-1].rank){
   //bar tooltips
   var barTip = d3.tip().attr('class','d3-tip')
   .html(d => {
-    // console.log(d)
+    // console.log(d[1]-d[0])
+    let time = +d[1]-d[0]
+    var data = d.data
+    delete data.rank
+    delete data.totalTime
+
+    function getKeyByValue(object, value) {
+      return Object.keys(object).find(key => object[key] === value);
+      
+    }
     
+    console.log(getKeyByValue(data, time))
     var text= "";
-      text += "<strong>Name:</strong> <span style='color:#ff9f68'>" + d.key + "</span><br>";
-      // text += "<strong>Time:</strong> <span style='color:#ff9f68'>" + "(s)" + "</span><br>";
+      text += "<strong>Name:</strong> <span style='color:#ff9f68'>" + getKeyByValue(data, time) + "</span><br>";
+      text += "<strong>Time:</strong> <span style='color:#ff9f68'>" + time + "(s)" + "</span><br>";
    
     return text;
     
@@ -488,8 +498,6 @@ var bars = layer
   .enter().append("g")
   .attr("class", "layer")
   .style("fill", function(d) { return color(d.key); })
-  .on('mouseover', barTip.show)
-  .on('mouseout', barTip.hide)
   .merge(layer)
   .selectAll('rect')
   .data(function(d) { return d; });
@@ -502,7 +510,10 @@ bars
     .attr("x", function(d) { return x(d[0]) +padding + 1; })
     .attr("height", Math.min(y.bandwidth(), 300))
     .attr("width", function(d) { return x(d[1]) - x(d[0]) })
-    .on('click', d => {console.log(d[1] - d[0])})
+    .on('mouseover', barTip.show)
+    .on('mouseout', barTip.hide)
+    
+   
     
 
 bars.merge(bars)
