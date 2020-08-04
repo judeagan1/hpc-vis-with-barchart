@@ -402,11 +402,12 @@ if (end > timeArray[timeArray.length-1].rank){
     keys.push(key);
 }
 
-  var barTooltip= "";
+  
   //bar tooltips
+  var barTooltip= "";
   var barTip = d3.tip().attr('class','d3-tip')
   .html(d => {
-    if (d.length == 2){
+    if (d.key == undefined){
       time = +d[1]-d[0]
       barTooltip += "<strong>Time:</strong> <span style='color:#ff9f68'>" + time + "(s)" + "</span><br>";
     }
@@ -417,6 +418,7 @@ if (end > timeArray[timeArray.length-1].rank){
     return barTooltip;
     
   });
+  
 
 
 
