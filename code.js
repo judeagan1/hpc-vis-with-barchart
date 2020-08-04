@@ -390,7 +390,7 @@ if (end > timeArray[timeArray.length-1].rank){
 }
 
 
-//filters out the objects based on the inputs given by the user
+
 
 
 
@@ -402,29 +402,22 @@ if (end > timeArray[timeArray.length-1].rank){
     keys.push(key);
 }
 
-
+  var barTooltip= "";
   //bar tooltips
   var barTip = d3.tip().attr('class','d3-tip')
   .html(d => {
-    // console.log(d[1]-d[0])
-    let time = +d[1]-d[0]
-    var data = d.data
-    delete data.rank
-    delete data.totalTime
-
-    function getKeyByValue(object, value) {
-      return Object.keys(object).find(key => object[key] === value);
-      
+    if (d.length == 2){
+      time = +d[1]-d[0]
+      barTooltip += "<strong>Time:</strong> <span style='color:#ff9f68'>" + time + "(s)" + "</span><br>";
     }
-    
-    console.log(getKeyByValue(data, time))
-    var text= "";
-      text += "<strong>Name:</strong> <span style='color:#ff9f68'>" + getKeyByValue(data, time) + "</span><br>";
-      text += "<strong>Time:</strong> <span style='color:#ff9f68'>" + time + "(s)" + "</span><br>";
-   
-    return text;
+    else{
+      barTooltip += "<strong>Name:</strong> <span style='color:#ff9f68'>" + d.key + "</span><br>";
+    }
+
+    return barTooltip;
     
   });
+
 
 
 
@@ -497,6 +490,10 @@ else if (drop_down === "best_vs_worst"){
 var bars = layer
   .enter().append("g")
   .attr("class", "layer")
+  .on('mouseover', barTip.show)
+  .on('mouseout', d =>{
+    barTip.hide;
+    barTooltip="";})
   .style("fill", function(d) { return color(d.key); })
   .merge(layer)
   .selectAll('rect')
@@ -512,6 +509,7 @@ bars
     .attr("width", function(d) { return x(d[1]) - x(d[0]) })
     .on('mouseover', barTip.show)
     .on('mouseout', barTip.hide)
+     
     
    
     
