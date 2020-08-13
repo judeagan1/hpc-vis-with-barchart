@@ -78,7 +78,7 @@ var container_3_plot = svg.append('g')
   .attr('transform', `translate(${padding*7/2 + container_width*2}, ${padding*3/2})`);
 
 // drop down options
-var options = [" ", "best_5", "worst_5", "best_vs_worst"];
+var options = [" ", "best_to_worst", "worst_to_best", "best_5", "worst_5", "best_vs_worst"];
 
 
 var drop_down = d3.select("#drop_down")
@@ -156,7 +156,7 @@ d3.json("data/aggregated_perf_data.json").then( data => {
   multipleProcess = data;
  
 
-  draw_bars(barRoot, undefined,undefined, dropDownSelected);
+  draw_bars(barRoot, start_pro, end_pro, dropDownSelected);
 
 });
 
@@ -217,13 +217,8 @@ function draw_tree(root)
     .on('mouseover', tip.show)
     .on('mouseout', tip.hide)
     .on('click', d => {
-      if (start_pro == false && end_pro == false){
-        if (start_pro === 0 ){
-          draw_bars(d,start_pro,end_pro,dropDownSelected);
-        }
-        else{
-          draw_bars(d, undefined, undefined, dropDownSelected)
-        }
+      if (d.children === undefined){
+        alert("This node has no children. Please select another node.")
       }
       else{
         draw_bars(d, start_pro, end_pro, dropDownSelected)
@@ -252,17 +247,8 @@ function draw_tree(root)
 d3.select("#drop_down").on("change", d => 
 {
   dropDownSelected = d3.select("#drop_down").property("value");
-  if (start_pro == false && end_pro == false){
-    if (start_pro === 0 ){
-      draw_bars(barRoot,start_pro,end_pro,dropDownSelected);
-    }
-    else{
-      draw_bars(barRoot, undefined, undefined, dropDownSelected)
-    }
-  }
-  else{
-    draw_bars(barRoot, start_pro, end_pro, dropDownSelected)
-  }
+  draw_bars(barRoot, start_pro, end_pro, dropDownSelected)
+  
 
 });
 
@@ -327,11 +313,12 @@ var y_label = container_2_plot.append("text")
 function draw_bars(data, start, end, drop_down)
 {
   
-  // console.log(data)
   
   let timeArray = []
   let timeObject = {};
   multipleProcess.forEach(process =>{
+  
+    
 
     var processHierarchy = d3.hierarchy( process.children, d => { return d.children; });
     // console.log(processHierarchy)
@@ -340,44 +327,99 @@ function draw_bars(data, start, end, drop_down)
 
 
     processHierarchy.descendants().forEach(node => {
+      
+      
+      // if node is main
+      if (node.parent ===  null && data.parent === null){
 
-      if(node.depth === data.depth){
-        // console.log(node)
-        if (timeObject[node.data.task_name] === undefined){
-          timeObject[node.data.task_name] = node.data.time;
-          timeObject['totalTime'] += node.data.time;
-        }
-        else if (timeObject[node.data.task_name] !== undefined){
-          timeObject[node.data.task_name] += node.data.time;
-          timeObject['totalTime'] += +node.data.time;
-        }
+        timeObject['totalTime'] = node.data.time;
+
+        node.children.forEach(child => {
+
+          timeObject[child.data.task_name] = child.data.time;
+
+        })
 
       }
 
-      //This will keep the length uniform at every depth by displaying previous nodes that have no children
-      if (node.depth < data.depth && node.data.children_count === 0){
-        if (timeObject[node.data.task_name] === undefined){
-          timeObject[node.data.task_name] = node.data.time;
-          timeObject['totalTime'] += +node.data.time;
-         
+      //if node is not main
+      else if (node.parent != null && data.parent != null){
+        
+        if (node.depth < 3){
+          if(data.data.task_name === node.data.task_name && data.parent.data.task_name === node.parent.data.task_name){
+            timeObject['totalTime'] += node.data.time;
+            node.children.forEach(child => {
+  
+              timeObject[child.data.task_name] = child.data.time;
+              
+    
+            })
+          }
+
         }
-        else if (timeObject[node.data.task_name] !== undefined){
-          timeObject[node.data.task_name] += node.data.time;
-          timeObject['totalTime'] += +node.data.time;
+        else{
+          if(data.data.task_name === node.data.task_name && data.parent.parent.data.task_name === node.parent.parent.data.task_name){
+            timeObject['totalTime'] = node.data.time;
+            node.children.forEach(child => {
+
+              timeObject[child.data.task_name] = child.data.time;
+
+    
+            })
+          }
         }
+
+        // if(data.data.task_name === node.data.task_name && data.parent.data.task_name === node.parent.data.task_name){
+        //   node.children.forEach(child => {
+
+        //     timeObject[child.data.task_name] = child.data.time;
+        //     timeObject['totalTime'] += child.data.time;
+  
+        //   })
+        // }
       }
      
-    });
+
+// saved for button click to show entire depth level
+      // if(node == data){
+
+      //   if (timeObject[node.data.task_name] === undefined){
+      //     timeObject[node.data.task_name] = node.data.time;
+      //     timeObject['totalTime'] += node.data.time;
+      //   }
+      //   else if (timeObject[node.data.task_name] !== undefined){
+      //     timeObject[node.data.task_name] += node.data.time;
+      //     timeObject['totalTime'] += +node.data.time;
+      //   }
+
+      // }
+
+    //   //This will keep the length uniform at every depth by displaying previous nodes that have no children
+    //   if (node.depth < data.depth && node.data.children_count === 0){
+    //     if (timeObject[node.data.task_name] === undefined){
+    //       timeObject[node.data.task_name] = node.data.time;
+    //       timeObject['totalTime'] += +node.data.time;
+         
+    //     }
+    //     else if (timeObject[node.data.task_name] !== undefined){
+    //       timeObject[node.data.task_name] += node.data.time;
+    //       timeObject['totalTime'] += +node.data.time;
+    //     }
+    //   }
+     
+    // });
 
     
    
     
-    // console.log(timeObject)
-    timeArray.push(timeObject);
-    timeObject = {}
+    
 
     
   })
+  // console.log(timeObject)
+    timeArray.push(timeObject);
+    timeObject = {}
+})
 
 
 
@@ -404,49 +446,47 @@ if (end > timeArray[timeArray.length-1].rank){
 
   
   //bar tooltips
-  var barTooltip= "";
+  var barTooltip= ""
+
   var barTip = d3.tip().attr('class','d3-tip')
   .html(d => {
-    if (d.key == undefined){
-      time = +d[1]-d[0]
-      barTooltip += "<strong>Time:</strong> <span style='color:#ff9f68'>" + time + "(s)" + "</span><br>";
-    }
-    else{
-      barTooltip += "<strong>Name:</strong> <span style='color:#ff9f68'>" + d.key + "</span><br>";
-    }
+    var text = "";
+    // if (d.key == undefined){
+    //   time = +d[1]-d[0]
+    //   text += "<strong>Time:</strong> <span style='color:#ff9f68'>" + time + "(s)" + "</span><br>";
+    // }
+    // else{
+      text += "<strong>Name:</strong> <span style='color:#ff9f68'>" + d.key + "</span><br>";
+    // }
 
-    return barTooltip;
-    
+    return text
   });
+ 
+  
   
 
 
 
 
   // if there are no specific processes given, then just display all processes
-if ( start === undefined && end === undefined){
-    var newTime = timeArray
- }
 
- else{
-   var newTime = [];
-   timeArray.forEach(process => {
-     if (process.rank >= start && process.rank <= end){
-       newTime.push(process);
-     }
-   })
-}
+  var newTime = [];
+  timeArray.forEach(process => {
+    if (process.rank >= start && process.rank <= end){
+      newTime.push(process);
+    }
+  });
+
 
 
 //changes the data set based on the dropdown option selected
 if (drop_down === " "){
   newTime = newTime;
 }
-else if (drop_down === "best_5"){
+else if (drop_down === "best_to_worst"){
   newTime.sort((a, b) => d3.ascending(a.totalTime, b.totalTime))
-
 }
-else if (drop_down === "worst_5"){
+else if (drop_down === "worst_to_best"){
   newTime.sort((a, b) => d3.descending(a.totalTime, b.totalTime))
 }
 else if (drop_down === "best_vs_worst"){
@@ -457,19 +497,57 @@ else if (drop_down === "best_vs_worst"){
     newTime.sort((a, b) => d3.ascending(a.totalTime, b.totalTime))
   tempTime = newTime
   newTime = [tempTime[0],tempTime[tempTime.length-1]]
-  console.log(newTime)
+  
   }
   
+}
+else if (drop_down === "best_5"){
+  if (newTime.length < 5){
+    alert("Less than 5 processes are selected. Please change the number of processes shown, or select a different menu option.")
+    newTime = newTime;
+  }
+  else{
+    newTime.sort((a, b) => d3.ascending(a.totalTime, b.totalTime))
+    if (newTime.length === 5){
+      newTime = newTime
+    }
+    else{
+      newTime = newTime.slice(0,6)
+    }
+  }
+}
+else if (drop_down === "worst_5"){
+  if (newTime.length < 5){
+    alert("Less than 5 processes are selected. Please change the number of processes shown, or select a different menu option.")
+    newTime = newTime;
+  }
+  else{
+    newTime.sort((a, b) => d3.descending(a.totalTime, b.totalTime))
+    if (newTime.length === 5){
+      newTime = newTime
+    }
+    else{
+      newTime = newTime.slice(0,6)
+    }
+  }
 }
 
   var stackedBarData = d3.stack().keys(keys)
 
   var currentDepth = data.depth;
 
-  
-  x.domain([0, globalRoot.data.time]);
+  var currentNodeLabel;
 
-  y.domain(newTime.map(d=>{return d.rank}));
+  if (data.data.task_name === undefined){
+    currentNodeLabel = data.data[0].children.task_name;
+  }
+  else{
+    currentNodeLabel = data.data.task_name
+  }
+
+  x.domain([0, d3.max(newTime, d => d.totalTime)]);
+
+  y.domain(newTime.map(d => {return d.rank}));
 
   x_axis.call(d3.axisBottom(x));
 
@@ -477,7 +555,7 @@ else if (drop_down === "best_vs_worst"){
   y_axis.call(d3.axisLeft(y));
 
   // y axis label
-  y_label.text(`Level ${currentDepth}`);
+  y_label.text(currentNodeLabel);
 
   
   var layer = container_2_plot.selectAll(".layer")
@@ -491,9 +569,7 @@ var bars = layer
   .enter().append("g")
   .attr("class", "layer")
   .on('mouseover', barTip.show)
-  .on('mouseout', d =>{
-    barTip.hide;
-    barTooltip="";})
+  .on('mouseout', barTip.hide)
   .style("fill", function(d) { return color(d.key); })
   .merge(layer)
   .selectAll('rect')
@@ -507,8 +583,8 @@ bars
     .attr("x", function(d) { return x(d[0]) +padding + 1; })
     .attr("height", Math.min(y.bandwidth(), 300))
     .attr("width", function(d) { return x(d[1]) - x(d[0]) })
-    .on('mouseover', barTip.show)
-    .on('mouseout', barTip.hide)
+    // .on('mouseover', function(d)  {barTip.show})
+    // .on('mouseout', barTip.hide)
      
     
    

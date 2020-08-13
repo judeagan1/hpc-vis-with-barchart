@@ -4,7 +4,7 @@
 		"children": {
 			"task_name": "main",
 			"children_count": 2,
-			"time": 81,
+			"time": 100,
 			"children": [
 				{
 					"task_name": "init",
