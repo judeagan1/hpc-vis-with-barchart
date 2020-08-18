@@ -104,8 +104,7 @@ var drop_down = d3.select("#drop_down")
 
 
 
-
-//updates the values of start and end processes
+var levelButtonValue;
 
 // 1. TO DO: draw tree structure of the tree
 var globalRoot;
@@ -126,6 +125,13 @@ var tip = d3.tip().attr('class','d3-tip')
       return text
     });
 
+
+
+
+
+
+
+
 // Read Json file
 d3.json("data/visual_sys.json").then( treeData => {
   // console.log(treeData); 
@@ -134,14 +140,15 @@ d3.json("data/visual_sys.json").then( treeData => {
   root.x0 = container_height / 2;
   root.y0 = 0;
 
-  
   globalRoot = root;
+
   // Assigns the x and y position for the nodes
   treeRoot = treemap(root);
   // draw tree
   draw_tree(treeRoot);
 
   // draw_bars(root);
+
  
 });
 
@@ -154,7 +161,27 @@ d3.json("data/aggregated_perf_data.json").then( data => {
   barRoot = d3.hierarchy( data, d => { return d.children; });
   
   multipleProcess = data;
- 
+
+  //creates buttons for each level and assigns their on-click values
+  var levels = [];
+
+  for (var lev = 0; lev <= globalRoot.height; lev++){
+    levels.push(`L${lev}`)
+  }
+  
+
+  levels.forEach(d => {
+    var button = document.createElement("button");
+        button.innerHTML = d;
+  
+    var buttonsArea = document.getElementById("buttons");
+        buttonsArea.appendChild(button);
+    
+    button.addEventListener ("click", function() {
+        levelButtonValue = button.textContent;
+        draw_bars(barRoot, start_pro, end_pro, dropDownSelected);
+    });
+  });
 
   draw_bars(barRoot, start_pro, end_pro, dropDownSelected);
 
@@ -385,6 +412,10 @@ d3.select("#drop_down").on("change", d =>
 
 
 
+
+
+
+
 // 3. TO DO: draw graph (also need to consider the drop down value)
 
 var transition = d3.transition().duration(300);
@@ -428,118 +459,121 @@ var y_label = container_2_plot.append("text")
 
 
 
-      
+
+
+
 // Draw bar chat
 function draw_bars(data, start, end, drop_down)
 {
   
-  
-  let timeArray = []
+  let timeArray = [];
   let timeObject = {};
-  multipleProcess.forEach(process =>{
+
+  if (levelButtonValue == undefined){
+
+    multipleProcess.forEach(process =>{
   
     
 
-    var processHierarchy = d3.hierarchy( process.children, d => { return d.children; });
-    // console.log(processHierarchy)
-    timeObject['rank'] = process.rank
-    timeObject['totalTime'] = 0;
-
-
-    processHierarchy.descendants().forEach(node => {
-      
-      
-      // if node is main
-      if (node.parent ===  null && data.parent === null){
-
-        timeObject['totalTime'] = node.data.time;
-
-        node.children.forEach(child => {
-
-          timeObject[child.data.task_name] = child.data.time;
-
-        })
-
-      }
-
-      //if node is not main
-      else if (node.parent != null && data.parent != null){
+      var processHierarchy = d3.hierarchy( process.children, d => { return d.children; });
+      timeObject['rank'] = process.rank
+      timeObject['totalTime'] = 0;
+  
+  
+      processHierarchy.descendants().forEach(node => {
         
-        if (node.depth < 3){
-          if(data.data.task_name === node.data.task_name && data.parent.data.task_name === node.parent.data.task_name){
-            timeObject['totalTime'] += node.data.time;
-            node.children.forEach(child => {
+        
+        // if node is main
+        if (node.parent ===  null && data.parent === null){
   
-              timeObject[child.data.task_name] = child.data.time;
-              
-    
-            })
-          }
-
-        }
-        else{
-          if(data.data.task_name === node.data.task_name && data.parent.parent.data.task_name === node.parent.parent.data.task_name){
-            timeObject['totalTime'] = node.data.time;
-            node.children.forEach(child => {
-
-              timeObject[child.data.task_name] = child.data.time;
-
-    
-            })
-          }
-        }
-
-        // if(data.data.task_name === node.data.task_name && data.parent.data.task_name === node.parent.data.task_name){
-        //   node.children.forEach(child => {
-
-        //     timeObject[child.data.task_name] = child.data.time;
-        //     timeObject['totalTime'] += child.data.time;
+          timeObject['totalTime'] = node.data.time;
   
-        //   })
-        // }
-      }
-     
-
-// saved for button click to show entire depth level
-      // if(node == data){
-
-      //   if (timeObject[node.data.task_name] === undefined){
-      //     timeObject[node.data.task_name] = node.data.time;
-      //     timeObject['totalTime'] += node.data.time;
-      //   }
-      //   else if (timeObject[node.data.task_name] !== undefined){
-      //     timeObject[node.data.task_name] += node.data.time;
-      //     timeObject['totalTime'] += +node.data.time;
-      //   }
-
-      // }
-
-    //   //This will keep the length uniform at every depth by displaying previous nodes that have no children
-    //   if (node.depth < data.depth && node.data.children_count === 0){
-    //     if (timeObject[node.data.task_name] === undefined){
-    //       timeObject[node.data.task_name] = node.data.time;
-    //       timeObject['totalTime'] += +node.data.time;
-         
-    //     }
-    //     else if (timeObject[node.data.task_name] !== undefined){
-    //       timeObject[node.data.task_name] += node.data.time;
-    //       timeObject['totalTime'] += +node.data.time;
-    //     }
-    //   }
-     
-    // });
-
+          node.children.forEach(child => {
+  
+            timeObject[child.data.task_name] = child.data.time;
+  
+          })
+        }
+  
+        //if node is not main
+        else if (node.parent != null && data.parent != null){
+          
+          if (node.depth < 3){
+            if(data.data.task_name === node.data.task_name && data.parent.data.task_name === node.parent.data.task_name){
+              timeObject['totalTime'] += node.data.time;
+              node.children.forEach(child => {
     
-   
-    
-    
-
-    
+                timeObject[child.data.task_name] = child.data.time;
+                
+      
+              })
+            }
+  
+          }
+          else{
+            if(data.data.task_name === node.data.task_name && data.parent.parent.data.task_name === node.parent.parent.data.task_name){
+              timeObject['totalTime'] = node.data.time;
+              node.children.forEach(child => {
+  
+                timeObject[child.data.task_name] = child.data.time;
+  
+      
+              })
+            }
+          }
+  
+        }
+    })
+  
+      timeArray.push(timeObject);
+      timeObject = {}
   })
-  // console.log(timeObject)
-    timeArray.push(timeObject);
-    timeObject = {}
-})
+
+  }
+
+
+  var currentDepth;
+
+  if(levelButtonValue != undefined){
+    var grabDepth = +levelButtonValue.slice(1, )
+    // console.log(grabDepth)
+
+    multipleProcess.forEach(process =>{
+  
+    
+
+      var processHierarchy = d3.hierarchy( process.children, d => { return d.children; });
+      timeObject['rank'] = process.rank
+      timeObject['totalTime'] = 0;
+  
+      
+      processHierarchy.descendants().forEach(node => {
+
+        // if node is main
+        if(node.depth === grabDepth){
+      
+          if (timeObject[node.data.task_name] === undefined){
+            timeObject[node.data.task_name] = node.data.time;
+            timeObject['totalTime'] += node.data.time;
+            
+          }
+          else if (timeObject[node.data.task_name] !== undefined){
+            timeObject[node.data.task_name] += node.data.time;
+            timeObject['totalTime'] += +node.data.time;
+          }
+  
+        }
+  
+        
+    })
+  
+      timeArray.push(timeObject);
+      timeObject = {}
+      currentDepth = grabDepth
+  });
+}
+
+
 
 
 
@@ -652,18 +686,27 @@ else if (drop_down === "worst_5"){
   }
 }
 
+
+
+
   var stackedBarData = d3.stack().keys(keys)
 
-  var currentDepth = data.depth;
 
   var currentNodeLabel;
+  if (levelButtonValue == undefined){
+    if (data.data.task_name === undefined){
+      currentNodeLabel = data.data[0].children.task_name;
+    }
+    else{
+      currentNodeLabel = data.data.task_name
+    }
+  }
+  else if(levelButtonValue != undefined){
+    currentNodeLabel = `Level ${currentDepth}`
+  }
 
-  if (data.data.task_name === undefined){
-    currentNodeLabel = data.data[0].children.task_name;
-  }
-  else{
-    currentNodeLabel = data.data.task_name
-  }
+  levelButtonValue = undefined
+  
 
   x.domain([0, d3.max(newTime, d => d.totalTime)]);
 
@@ -703,12 +746,7 @@ bars
     .attr("x", function(d) { return x(d[0]) +padding + 1; })
     .attr("height", Math.min(y.bandwidth(), 300))
     .attr("width", function(d) { return x(d[1]) - x(d[0]) })
-    // .on('mouseover', function(d)  {barTip.show})
-    // .on('mouseout', barTip.hide)
-     
-    
    
-    
 
 bars.merge(bars)
 .attr("y", function(d) { if(newTime.length === 1){ return container_height/2  - 150 -padding} else{ return y(d.data.rank); }})
@@ -787,19 +825,4 @@ bars.merge(bars)
 
 
 // 4. TO DO: Add profermance profile (This part you can design freely)
-
-
-// All the code here is just for reference. You can change it freely. 
-
-
-
-
-
-
-
-
-
-
-
-
 

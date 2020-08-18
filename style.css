@@ -87,3 +87,9 @@ h1{
 .bar:hover {
   fill: orangered ;
 }
+
+#buttons button{
+  font-size: 30px;
+  padding: 10px;
+  margin-right: 20px;
+}
